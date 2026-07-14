@@ -335,7 +335,13 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
     <h3>Suggestions IA</h3>
-    <p class="recommend-intro">Basées sur les films que vous avez notés.</p>
+    <p class="recommend-intro">Quel style de film te ferait plaisir aujourd'hui ?</p>
+    <div class="filter-row" id="recommendGenreRow"></div>
+    <div class="field-block">
+      <label for="recommendStyleInput">Précise l'ambiance (optionnel)</label>
+      <input type="text" id="recommendStyleInput" placeholder="Ex. léger, haletant, qui fait peur, feel-good…">
+    </div>
+    <button type="button" class="btn btn-primary" id="recommendSubmitBtn">Suggérer des films</button>
     <div class="sr-results" id="recommendResults"></div>
   </div>
 </div>

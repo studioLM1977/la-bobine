@@ -1109,16 +1109,53 @@
 
   const recommendModalOverlay = document.getElementById('recommendModalOverlay');
   const recommendResults = document.getElementById('recommendResults');
+  const recommendGenreRow = document.getElementById('recommendGenreRow');
+  const recommendStyleInput = document.getElementById('recommendStyleInput');
+  const recommendSubmitBtn = document.getElementById('recommendSubmitBtn');
 
-  document.getElementById('recommendBtn').addEventListener('click', async () => {
-    recommendModalOverlay.classList.add('is-open');
+  let recommendGenre = 'all';
 
-    const rated = movies.filter(m => m.rating > 0);
-    if (rated.length === 0) {
-      recommendResults.innerHTML = '<p class="sr-empty">Notez au moins un film pour obtenir des suggestions.</p>';
+  function renderRecommendGenres() {
+    const genreSet = new Set();
+    movies.filter(m => m.rating > 0).forEach(m => (m.genres || []).forEach(g => genreSet.add(g)));
+
+    if (genreSet.size === 0) {
+      recommendGenreRow.hidden = true;
       return;
     }
+    recommendGenreRow.hidden = false;
+    const genres = [...genreSet].sort((a, b) => a.localeCompare(b, 'fr'));
+    recommendGenreRow.innerHTML = ['all', ...genres].map(g => `
+      <button type="button" class="filter-badge ${g === recommendGenre ? 'is-active' : ''}" data-genre="${escapeAttr(g)}">${g === 'all' ? 'Peu importe' : escapeHtml(g)}</button>
+    `).join('');
+  }
 
+  recommendGenreRow.addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-badge');
+    if (!btn) return;
+    recommendGenre = btn.dataset.genre;
+    renderRecommendGenres();
+  });
+
+  document.getElementById('recommendBtn').addEventListener('click', () => {
+    recommendGenre = 'all';
+    recommendStyleInput.value = '';
+    renderRecommendGenres();
+
+    const rated = movies.filter(m => m.rating > 0);
+    recommendResults.innerHTML = rated.length === 0
+      ? '<p class="sr-empty">Notez au moins un film pour obtenir des suggestions.</p>'
+      : '';
+
+    recommendModalOverlay.classList.add('is-open');
+  });
+
+  recommendSubmitBtn.addEventListener('click', async () => {
+    const rated = movies.filter(m => m.rating > 0);
+    if (rated.length === 0 || recommendSubmitBtn.disabled) return;
+
+    recommendSubmitBtn.disabled = true;
+    recommendSubmitBtn.classList.add('is-busy');
     renderSrSkeleton(recommendResults);
 
     try {
@@ -1128,6 +1165,8 @@
         body: JSON.stringify({
           action: 'recommend',
           movies: rated.map(m => ({ title: m.title, director: m.director, genres: m.genres || [], rating: m.rating })),
+          genre: recommendGenre === 'all' ? '' : recommendGenre,
+          style: recommendStyleInput.value.trim(),
         }),
       });
       if (!res.ok) throw new Error('IA indisponible');
@@ -1147,6 +1186,9 @@
       }
     } catch (err) {
       recommendResults.innerHTML = '<p class="sr-error">Suggestions indisponibles pour le moment.</p>';
+    } finally {
+      recommendSubmitBtn.disabled = false;
+      recommendSubmitBtn.classList.remove('is-busy');
     }
   });
 

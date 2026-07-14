@@ -68,11 +68,18 @@ export default async function handler(req, res) {
         res.status(400).json({ error: 'Aucun film noté pour baser une recommandation' });
         return;
       }
-      const system = 'Tu es un expert cinéma. On te donne les films notés par un utilisateur '
+      const genre = ((req.body.genre || '').toString().trim());
+      const style = ((req.body.style || '').toString().trim());
+
+      let system = 'Tu es un expert cinéma. On te donne les films notés par un utilisateur '
         + '(titre, réalisateur, genres, note sur 5). Propose 6 films QU\'IL N\'A PAS DANS CETTE LISTE '
         + 'et qu\'il pourrait aimer, en te basant sur ses goûts (genres et réalisateurs récurrents '
-        + 'parmi ses mieux notés). Réponds uniquement en JSON strictement de la forme '
+        + 'parmi ses mieux notés).';
+      if (genre) system += ` Il veut cette fois précisément un film du genre "${genre}" : respecte ce choix en priorité.`;
+      if (style) system += ` Ambiance recherchée : "${style}".`;
+      system += ' Réponds uniquement en JSON strictement de la forme '
         + '{"suggestions":[{"title":"...","reason":"phrase courte en français expliquant pourquoi"}]}.';
+
       const user = JSON.stringify(rated.map((m) => ({
         title: m.title, director: m.director, genres: m.genres || [], rating: m.rating,
       })));
