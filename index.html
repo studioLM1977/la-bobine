@@ -91,7 +91,6 @@
           <div class="tabs" id="tabs">
             <button class="tab is-active" data-filter="all">Tous <span>0</span></button>
             <button class="tab" data-filter="want">À voir <span>0</span></button>
-            <button class="tab" data-filter="watching">En cours <span>0</span></button>
             <button class="tab" data-filter="seen">Vus <span>0</span></button>
             <button class="tab" data-filter="dnf">Abandonnés <span>0</span></button>
           </div>
@@ -183,19 +182,9 @@
           <label>Statut</label>
           <div class="status-chips" id="mmStatusChips">
             <button class="chip" data-status="want">À voir</button>
-            <button class="chip" data-status="watching">En cours</button>
             <button class="chip" data-status="seen">Vu</button>
             <button class="chip" data-status="dnf">Abandonné</button>
           </div>
-        </div>
-
-        <div class="field-block" id="mmProgressBlock">
-          <label>Progression</label>
-          <div class="progress-edit">
-            <input type="number" id="mmCurrentMinute" min="0" step="1">
-            <span>/ <span id="mmTotalMinutes"></span> min</span>
-          </div>
-          <div class="progress-track"><div class="progress-fill" id="mmProgressFill"></div></div>
         </div>
 
         <div class="field-block">
@@ -316,7 +305,6 @@
         <label>Statut de départ</label>
         <div class="status-chips" id="afStatusChips">
           <button type="button" class="chip is-active" data-status="want">À voir</button>
-          <button type="button" class="chip" data-status="watching">En cours</button>
           <button type="button" class="chip" data-status="seen">Vu</button>
           <button type="button" class="chip" data-status="dnf">Abandonné</button>
         </div>

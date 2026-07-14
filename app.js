@@ -11,7 +11,6 @@
 
   const STATUS_LABELS = {
     want: 'À voir',
-    watching: 'En cours',
     seen: 'Vu',
     dnf: 'Abandonné',
   };
@@ -430,7 +429,7 @@
   }
 
   function renderTabCounts() {
-    const counts = { all: movies.length, want: 0, watching: 0, seen: 0, dnf: 0 };
+    const counts = { all: movies.length, want: 0, seen: 0, dnf: 0 };
     movies.forEach(m => { counts[m.status] = (counts[m.status] || 0) + 1; });
     tabsEl.querySelectorAll('.tab').forEach(tab => {
       const f = tab.dataset.filter;
@@ -669,7 +668,6 @@
 
   const movieModalOverlay = document.getElementById('movieModalOverlay');
   const mmStatusChips = document.getElementById('mmStatusChips');
-  const mmProgressBlock = document.getElementById('mmProgressBlock');
   const mmPoster = document.getElementById('mmPoster');
   const mmPosterUrl = document.getElementById('mmPosterUrl');
   const mmPosterUrlBlock = document.getElementById('mmPosterUrlBlock');
@@ -704,15 +702,11 @@
       mmPosterUrlBlock.hidden = true;
       document.getElementById('mmRuntime').textContent = movie.runtime + ' min' + (movie.year ? ' · ' + movie.year : '');
       document.getElementById('mmNotes').value = movie.notes || '';
-      document.getElementById('mmCurrentMinute').value = movie.currentMinute || 0;
-      document.getElementById('mmCurrentMinute').max = movie.runtime;
-      document.getElementById('mmTotalMinutes').textContent = movie.runtime;
 
       mmSelectedStatus = movie.status;
       updateStatusChips(mmStatusChips, mmSelectedStatus);
-      toggleProgressBlock();
       toggleSynopsisBlock();
-      if (mmSelectedStatus === 'seen' || mmSelectedStatus === 'watching') {
+      if (mmSelectedStatus === 'seen') {
         if (movie.synopsis) renderSynopsisText(movie.synopsis);
         else loadSynopsis(movie);
       }
@@ -721,7 +715,6 @@
       mmStars.set(movie.rating || 0);
       document.getElementById('mmStarsValue').textContent = movie.rating > 0 ? movie.rating + ' / 5' : 'Pas encore noté';
 
-      updateProgressPreview();
       movieModalOverlay.classList.add('is-open');
     };
 
@@ -745,12 +738,8 @@
     if (url) mmPoster.src = url;
   });
 
-  function toggleProgressBlock() {
-    mmProgressBlock.style.display = mmSelectedStatus === 'watching' ? 'block' : 'none';
-  }
-
   function toggleSynopsisBlock() {
-    document.getElementById('mmSynopsisBlock').hidden = mmSelectedStatus !== 'seen' && mmSelectedStatus !== 'watching';
+    document.getElementById('mmSynopsisBlock').hidden = mmSelectedStatus !== 'seen';
   }
 
   function updateStatusChips(container, status) {
@@ -766,9 +755,8 @@
     haptic(12);
     mmSelectedStatus = chip.dataset.status;
     updateStatusChips(mmStatusChips, mmSelectedStatus);
-    toggleProgressBlock();
     toggleSynopsisBlock();
-    if (mmSelectedStatus === 'seen' || mmSelectedStatus === 'watching') {
+    if (mmSelectedStatus === 'seen') {
       const movie = movies.find(m => m.id === activeMovieId);
       if (movie) {
         if (movie.synopsis) renderSynopsisText(movie.synopsis);
@@ -776,16 +764,6 @@
       }
     }
   });
-
-  function updateProgressPreview() {
-    const movie = movies.find(m => m.id === activeMovieId);
-    if (!movie) return;
-    const current = parseInt(document.getElementById('mmCurrentMinute').value, 10) || 0;
-    const pct = movie.runtime ? Math.min(100, Math.round((current / movie.runtime) * 100)) : 0;
-    document.getElementById('mmProgressFill').style.width = pct + '%';
-  }
-
-  document.getElementById('mmCurrentMinute').addEventListener('input', updateProgressPreview);
 
   document.getElementById('mmSaveBtn').addEventListener('click', () => {
     const movie = movies.find(m => m.id === activeMovieId);
@@ -808,10 +786,6 @@
     movie.status = mmSelectedStatus;
     movie.notes = document.getElementById('mmNotes').value;
     movie.rating = mmStars.get();
-    let current = parseInt(document.getElementById('mmCurrentMinute').value, 10) || 0;
-    current = Math.max(0, Math.min(movie.runtime, current));
-    movie.currentMinute = current;
-    if (movie.status === 'seen') movie.currentMinute = movie.runtime;
     saveMovies();
     renderAll();
     closeModals();
@@ -1266,7 +1240,6 @@
       runtime,
       year,
       genres,
-      currentMinute: afSelectedStatus === 'seen' ? runtime : 0,
       status: afSelectedStatus,
       rating: 0,
       notes: '',
@@ -1379,15 +1352,13 @@
         if (existingKeys.has(newKey)) return;
         existingKeys.add(newKey);
 
-        const runtime = item.runtime || 0;
         movies.unshift({
           id: uid(),
           title: item.title,
           director: item.director,
-          runtime,
+          runtime: item.runtime || 0,
           year: item.year || null,
           genres: item.genres || [],
-          currentMinute: item.status === 'seen' ? runtime : 0,
           status: item.status || 'seen',
           rating: 0,
           notes: '',
