@@ -1021,6 +1021,40 @@
   const describeResults = document.getElementById('describeResults');
   const describeSubmitBtn = document.getElementById('describeSubmitBtn');
 
+  // Dictée vocale : API native du navigateur, gratuite, aucun service tiers.
+  // Support inégal (Chrome/Edge oui, Safari iOS non) — le bouton reste masqué
+  // (attribut hidden dans le HTML) si l'API n'existe pas.
+  const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const describeMicBtn = document.getElementById('describeMicBtn');
+  if (SpeechRecognitionCtor && describeMicBtn) {
+    describeMicBtn.hidden = false;
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = 'fr-FR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    let listening = false;
+
+    recognition.addEventListener('result', (e) => {
+      const transcript = e.results[0][0].transcript;
+      describeInput.value = (describeInput.value.trim() ? describeInput.value.trim() + ' ' : '') + transcript;
+    });
+    recognition.addEventListener('end', () => {
+      listening = false;
+      describeMicBtn.classList.remove('is-listening');
+    });
+    recognition.addEventListener('error', () => {
+      listening = false;
+      describeMicBtn.classList.remove('is-listening');
+    });
+
+    describeMicBtn.addEventListener('click', () => {
+      if (listening) { recognition.stop(); return; }
+      listening = true;
+      describeMicBtn.classList.add('is-listening');
+      recognition.start();
+    });
+  }
+
   function renderCandidateRow(container, item, onPick, metaText) {
     const row = document.createElement('button');
     row.type = 'button';

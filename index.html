@@ -274,7 +274,12 @@
       <div id="describeModeBlock" hidden>
         <div class="field-block">
           <label for="describeInput">Décrivez le film (intrigue, acteur, scène culte…)</label>
-          <textarea id="describeInput" rows="3" placeholder="Ex. le film où un type revit la même journée en boucle, avec Bill Murray"></textarea>
+          <div class="textarea-with-mic">
+            <textarea id="describeInput" rows="3" placeholder="Ex. le film où un type revit la même journée en boucle, avec Bill Murray"></textarea>
+            <button type="button" class="mic-btn" id="describeMicBtn" aria-label="Dicter" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><path d="M12 18v3M9 21h6"/></svg>
+            </button>
+          </div>
         </div>
         <button type="button" class="btn btn-ghost" id="describeSubmitBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>

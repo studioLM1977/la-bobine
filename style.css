@@ -1064,6 +1064,40 @@ input:focus, textarea:focus {
 
 textarea { resize: vertical; font-family: inherit; }
 
+.textarea-with-mic { position: relative; }
+.textarea-with-mic textarea { padding-right: 44px; }
+
+.mic-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.mic-btn svg { width: 15px; height: 15px; }
+.mic-btn:hover { background: var(--surface-2); color: var(--text-primary); }
+
+.mic-btn.is-listening {
+  background: var(--danger-soft);
+  color: var(--danger);
+  animation: mic-pulse 1.4s ease infinite;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,90,90,0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(239,90,90,0); }
+}
+
 .mode-tabs {
   display: flex;
   gap: 4px;
