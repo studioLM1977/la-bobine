@@ -21,22 +21,6 @@
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const supportsViewTransition = typeof document !== 'undefined' && 'startViewTransition' in document;
 
-  /** Compteur animé 0 → `to` avec easing doux. */
-  function countUp(el, to, duration = 900) {
-    if (prefersReducedMotion || !el) { el.textContent = to; return; }
-    const start = performance.now();
-    const from = 0;
-    function frame(now) {
-      const t = Math.min(1, (now - start) / duration);
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - t, 3);
-      el.textContent = Math.round(from + (to - from) * eased);
-      if (t < 1) requestAnimationFrame(frame);
-      else el.textContent = to;
-    }
-    requestAnimationFrame(frame);
-  }
-
   /** Ripple liquide depuis le point de clic, sur l'élément ciblé. */
   function spawnRipple(target, clientX, clientY) {
     if (prefersReducedMotion) return;
@@ -262,63 +246,7 @@
     }
   }
 
-  const MOCK_MOVIES = [
-    {
-      id: 'm1',
-      title: 'Inception',
-      director: 'Christopher Nolan',
-      runtime: 148,
-      currentMinute: 148,
-      status: 'seen',
-      rating: 4.5,
-      notes: "Le kick final au son des cors continue de faire débat.",
-      poster: fallbackCover('Inception'),
-    },
-    {
-      id: 'm2',
-      title: 'Interstellar',
-      director: 'Christopher Nolan',
-      runtime: 169,
-      currentMinute: 90,
-      status: 'watching',
-      rating: 0,
-      notes: '',
-      poster: fallbackCover('Interstellar'),
-    },
-    {
-      id: 'm3',
-      title: 'Pulp Fiction',
-      director: 'Quentin Tarantino',
-      runtime: 154,
-      currentMinute: 0,
-      status: 'want',
-      rating: 0,
-      notes: '',
-      poster: fallbackCover('Pulp Fiction'),
-    },
-    {
-      id: 'm4',
-      title: "Le Fabuleux Destin d'Amélie Poulain",
-      director: 'Jean-Pierre Jeunet',
-      runtime: 122,
-      currentMinute: 122,
-      status: 'seen',
-      rating: 5,
-      notes: '',
-      poster: fallbackCover("Le Fabuleux Destin d'Amélie Poulain"),
-    },
-    {
-      id: 'm5',
-      title: 'Blade Runner 2049',
-      director: 'Denis Villeneuve',
-      runtime: 164,
-      currentMinute: 40,
-      status: 'dnf',
-      rating: 2,
-      notes: '',
-      poster: fallbackCover('Blade Runner 2049'),
-    },
-  ];
+  const MOCK_MOVIES = [];
 
   function loadMovies() {
     try {
@@ -351,14 +279,11 @@
 
   // ---------- Rendu ----------
 
-  const watchingStrip = document.getElementById('watchingStrip');
-  const watchingCount = document.getElementById('watchingCount');
   const movieGrid = document.getElementById('movieGrid');
   const emptyState = document.getElementById('emptyState');
   const tabsEl = document.getElementById('tabs');
 
   function renderAll() {
-    renderWatchingStrip();
     renderTopMovies();
     renderTabCounts();
     renderGrid();
@@ -393,62 +318,6 @@
       `;
       card.addEventListener('click', (e) => openMovieModal(movie.id, e));
       topStrip.appendChild(card);
-    });
-  }
-
-  function renderWatchingStrip() {
-    const watching = movies.filter(m => m.status === 'watching');
-    watchingCount.textContent = watching.length;
-    watchingStrip.innerHTML = '';
-
-    if (watching.length === 0) {
-      watchingStrip.innerHTML = '<p style="color:var(--text-tertiary); font-size:13.5px;">Aucun visionnage en cours. Lancez-vous.</p>';
-      return;
-    }
-
-    watching.forEach(movie => {
-      const pct = movie.runtime ? Math.min(100, Math.round((movie.currentMinute / movie.runtime) * 100)) : 0;
-      const isComplete = pct >= 100;
-      // Géométrie de l'anneau (cercle de rayon 30 dans un viewBox 78).
-      const R = 30;
-      const CIRC = 2 * Math.PI * R;
-      const offset = CIRC * (1 - pct / 100);
-      const card = document.createElement('div');
-      card.className = 'watching-card';
-      card.dataset.id = movie.id;
-      card.innerHTML = `
-        <div class="watching-card-cover"><img src="${escapeAttr(movie.poster)}" alt="" loading="lazy" onerror="this.style.display='none'"></div>
-        <div class="watching-card-body">
-          <p class="watching-card-director">${escapeHtml(movie.director)}</p>
-          <p class="watching-card-title">${escapeHtml(movie.title)}</p>
-          <div class="ring-progress ${isComplete ? 'is-complete' : ''}">
-            <svg viewBox="0 0 78 78">
-              <circle class="ring-track" cx="39" cy="39" r="${R}"/>
-              <circle class="ring-fill" cx="39" cy="39" r="${R}"
-                stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC}"/>
-            </svg>
-            <div class="ring-label"><span class="ring-num">0</span><span class="ring-pct">%</span></div>
-          </div>
-          <div class="watching-card-meta"><span><strong>${pct}%</strong></span><span>${movie.currentMinute}/${movie.runtime} min</span></div>
-        </div>
-      `;
-      card.addEventListener('click', (e) => openMovieModal(movie.id, e));
-      watchingStrip.appendChild(card);
-
-      // Animation du remplissage + count-up après paint.
-      const ringFill = card.querySelector('.ring-fill');
-      const ringNum = card.querySelector('.ring-num');
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (!prefersReducedMotion) {
-            ringFill.style.strokeDashoffset = offset;
-            countUp(ringNum, pct, 1100);
-          } else {
-            ringFill.style.strokeDashoffset = offset;
-            ringNum.textContent = pct;
-          }
-        });
-      });
     });
   }
 
@@ -659,7 +528,7 @@
 
     // Identify the source cover from the click, for the morph transition.
     if (event && event.currentTarget) {
-      const src = event.currentTarget.querySelector('.movie-card-cover, .watching-card-cover');
+      const src = event.currentTarget.querySelector('.movie-card-cover');
       if (src) vtSourceCover = src;
     }
 
