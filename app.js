@@ -1294,7 +1294,7 @@
   [movieModalOverlay, addModalOverlay, recommendModalOverlay].forEach(overlay => {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModals(); });
   });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModals(); closeSettingsPopover(); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModals(); });
 
   // ---------- Import via lien (?import=) ----------
 
@@ -1508,9 +1508,6 @@
   // ---------- Réglages : thème clair/sombre ----------
 
   const avatarBtn = document.getElementById('avatarBtn');
-  const settingsPopover = document.getElementById('settingsPopover');
-  const themeToggleBtn = document.getElementById('themeToggleBtn');
-  const themeToggleLabel = document.getElementById('themeToggleLabel');
 
   function currentTheme() {
     const saved = localStorage.getItem(THEME_KEY);
@@ -1519,9 +1516,7 @@
   }
 
   function markActiveTheme() {
-    const active = currentTheme();
-    themeToggleBtn.classList.toggle('is-dark', active === 'dark');
-    themeToggleLabel.textContent = active === 'dark' ? 'Sombre' : 'Clair';
+    avatarBtn.classList.toggle('is-dark', currentTheme() === 'dark');
   }
 
   function setTheme(theme) {
@@ -1530,32 +1525,11 @@
     markActiveTheme();
   }
 
-  let closePopoverTimer = null;
-
-  avatarBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    clearTimeout(closePopoverTimer);
-    markActiveTheme();
-    settingsPopover.hidden = false;
-    void settingsPopover.offsetHeight;
-    settingsPopover.classList.add('is-open');
-  });
-
-  function closeSettingsPopover() {
-    clearTimeout(closePopoverTimer);
-    settingsPopover.classList.remove('is-open');
-    closePopoverTimer = setTimeout(() => { settingsPopover.hidden = true; }, 200);
-  }
-
-  document.addEventListener('click', (e) => {
-    if (!settingsPopover.hidden && !settingsPopover.contains(e.target) && e.target !== avatarBtn) {
-      closeSettingsPopover();
-    }
-  });
-
-  themeToggleBtn.addEventListener('click', () => {
+  avatarBtn.addEventListener('click', () => {
     setTheme(currentTheme() === 'dark' ? 'light' : 'dark');
   });
+
+  markActiveTheme();
 
   // ---------- Init ----------
 
