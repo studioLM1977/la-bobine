@@ -506,8 +506,11 @@ img { display: block; max-width: 100%; }
 
 .top-rank {
   position: absolute;
-  top: -8px;
-  left: -8px;
+  /* À l'intérieur du cadre (pas de décalage négatif) : un conteneur avec
+     overflow-x: auto force aussi le clipping vertical, ce qui coupait ce
+     badge quand il débordait du coin de l'affiche. */
+  top: 8px;
+  left: 8px;
   z-index: 1;
   width: 26px;
   height: 26px;
