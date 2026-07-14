@@ -374,9 +374,10 @@
   // true → on anime l'entrée des cartes (tab/sort/initial), false pendant la frappe de recherche.
   let animateGrid = true;
 
-  function saveMovies() {
+  function saveMovies(immediate = false) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
-    queueSync();
+    if (immediate) syncNow();
+    else queueSync();
   }
 
   function uid() {
@@ -828,7 +829,7 @@
 
   document.getElementById('mmDeleteBtn').addEventListener('click', () => {
     movies = movies.filter(m => m.id !== activeMovieId);
-    saveMovies();
+    saveMovies(true);
     renderAll();
     closeModals();
   });
@@ -1238,13 +1239,19 @@
 
   function queueSync() {
     clearTimeout(syncTimer);
-    syncTimer = setTimeout(() => {
-      fetch(SYNC_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(movies),
-      }).catch(() => { /* hors-ligne : on retentera au prochain changement */ });
-    }, 800);
+    syncTimer = setTimeout(syncNow, 800);
+  }
+
+  // Envoi sans délai : utilisé pour les suppressions, où le débounce classique
+  // laisse une fenêtre pendant laquelle fermer/recharger la page avant l'envoi
+  // ferait revenir l'entrée supprimée au prochain chargement (fusion depuis le cloud).
+  function syncNow() {
+    clearTimeout(syncTimer);
+    fetch(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(movies),
+    }).catch(() => { /* hors-ligne : on retentera au prochain changement */ });
   }
 
   async function syncFromServer() {
