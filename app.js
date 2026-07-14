@@ -233,6 +233,7 @@
       if (!movie.director && details.director) movie.director = details.director;
       if (!movie.runtime && details.runtime) movie.runtime = details.runtime;
       if (!movie.poster && details.poster) movie.poster = details.poster;
+      if (!movie.year && details.year) movie.year = details.year;
 
       if (!details.overview) { renderSynopsisEmpty(); saveMovies(); return; }
 
@@ -244,6 +245,79 @@
       if (activeMovieId !== movieId) return;
       renderSynopsisEmpty();
     }
+  }
+
+  // ---------- Genres, casting, bande-annonce, films similaires ----------
+  // Récupérés à chaque ouverture de fiche (non mis en cache, contrairement au
+  // synopsis) : ce sont des infos secondaires, peu coûteuses à rafraîchir.
+
+  function renderGenres(genres) {
+    const el = document.getElementById('mmGenres');
+    if (!genres || genres.length === 0) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    el.innerHTML = genres.map(g => `<span class="genre-tag">${escapeHtml(g)}</span>`).join('');
+  }
+
+  function renderCast(cast) {
+    const block = document.getElementById('mmCastBlock');
+    if (!cast || cast.length === 0) { block.hidden = true; return; }
+    block.hidden = false;
+    document.getElementById('mmCastBody').textContent = cast.join(', ');
+  }
+
+  function renderTrailer(key) {
+    const link = document.getElementById('mmTrailerLink');
+    if (!key) { link.hidden = true; return; }
+    link.hidden = false;
+    link.href = `https://www.youtube.com/watch?v=${encodeURIComponent(key)}`;
+  }
+
+  function renderSimilar(items) {
+    const block = document.getElementById('mmSimilarBlock');
+    const strip = document.getElementById('mmSimilarStrip');
+    if (!items || items.length === 0) { block.hidden = true; strip.innerHTML = ''; return; }
+    block.hidden = false;
+    strip.innerHTML = '';
+    items.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'similar-item';
+      el.innerHTML = `
+        <img src="${escapeAttr(item.poster)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <p>${escapeHtml(item.title)}</p>
+      `;
+      el.addEventListener('click', () => {
+        closeModals();
+        openAddModal();
+        setAddMode('search');
+        selectMovie(item);
+      });
+      strip.appendChild(el);
+    });
+  }
+
+  async function loadFilmExtras(movie) {
+    const movieId = movie.id;
+    renderGenres(null);
+    renderCast(null);
+    renderTrailer(null);
+    renderSimilar(null);
+
+    try {
+      let tmdbId = movie.tmdbId;
+      if (!tmdbId) {
+        const results = await searchTmdb(`${movie.title} ${movie.director}`, 1);
+        tmdbId = results[0] && results[0].id;
+      }
+      if (activeMovieId !== movieId || !tmdbId) return;
+
+      const details = await getMovieDetails(tmdbId);
+      if (activeMovieId !== movieId) return;
+
+      renderGenres(details.genres);
+      renderCast(details.cast);
+      renderTrailer(details.trailerKey);
+      renderSimilar(details.similar);
+    } catch (err) { /* infos secondaires : on laisse les blocs masqués */ }
   }
 
   const MOCK_MOVIES = [];
@@ -435,6 +509,8 @@
         return sorted.sort((a, b) => a.director.localeCompare(b.director, 'fr'));
       case 'rating':
         return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0) || a.title.localeCompare(b.title, 'fr'));
+      case 'year':
+        return sorted.sort((a, b) => (b.year || 0) - (a.year || 0) || a.title.localeCompare(b.title, 'fr'));
       default:
         return sorted;
     }
@@ -540,7 +616,7 @@
       document.getElementById('mmTitle').value = movie.title;
       mmPosterUrl.value = movie.poster;
       mmPosterUrlBlock.hidden = true;
-      document.getElementById('mmRuntime').textContent = movie.runtime + ' min';
+      document.getElementById('mmRuntime').textContent = movie.runtime + ' min' + (movie.year ? ' · ' + movie.year : '');
       document.getElementById('mmNotes').value = movie.notes || '';
       document.getElementById('mmCurrentMinute').value = movie.currentMinute || 0;
       document.getElementById('mmCurrentMinute').max = movie.runtime;
@@ -554,6 +630,7 @@
         if (movie.synopsis) renderSynopsisText(movie.synopsis);
         else loadSynopsis(movie);
       }
+      loadFilmExtras(movie);
 
       mmStars.set(movie.rating || 0);
       document.getElementById('mmStarsValue').textContent = movie.rating > 0 ? movie.rating + ' / 5' : 'Pas encore noté';
@@ -807,6 +884,7 @@
       director: '',
       poster: item.poster || fallbackCover(item.title),
       runtime: 0,
+      year: item.year || null,
       tmdbId: item.id,
       synopsis: item.overview ? truncateSynopsis(item.overview) : null,
     };
@@ -817,6 +895,7 @@
       if (!selectedMovie || selectedMovie.tmdbId !== item.id) return; // sélection changée entre-temps
       selectedMovie.director = details.director || '';
       selectedMovie.runtime = details.runtime || 0;
+      if (details.year) selectedMovie.year = details.year;
       if (details.poster) selectedMovie.poster = details.poster;
       if (details.overview) selectedMovie.synopsis = truncateSynopsis(details.overview);
       applySelectedMovie();
@@ -886,7 +965,7 @@
   addForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    let title, director, poster, runtime, tmdbId, synopsis;
+    let title, director, poster, runtime, year, tmdbId, synopsis;
 
     if (addMode === 'search') {
       if (!selectedMovie) return;
@@ -894,6 +973,7 @@
       director = selectedMovie.director;
       poster = selectedMovie.poster;
       runtime = parseInt(afRuntimeInput.value, 10) || selectedMovie.runtime || 0;
+      year = selectedMovie.year || null;
       tmdbId = selectedMovie.tmdbId || null;
       synopsis = selectedMovie.synopsis || null;
     } else {
@@ -901,6 +981,7 @@
       director = document.getElementById('afDirector').value.trim();
       poster = document.getElementById('afPoster').value.trim();
       runtime = parseInt(afRuntimeInput.value, 10) || 0;
+      year = parseInt(document.getElementById('afYear').value, 10) || null;
       tmdbId = null;
       synopsis = null;
       if (!title || !director) return;
@@ -911,6 +992,7 @@
       title,
       director,
       runtime,
+      year,
       currentMinute: afSelectedStatus === 'seen' ? runtime : 0,
       status: afSelectedStatus,
       rating: 0,
@@ -1012,6 +1094,7 @@
           if (item.director && item.director !== existing.director) { existing.director = item.director; changed = true; }
           if (item.poster) { existing.poster = item.poster; changed = true; }
           if (item.runtime) { existing.runtime = item.runtime; changed = true; }
+          if (item.year) { existing.year = item.year; changed = true; }
           if (item.tmdbId) { existing.tmdbId = item.tmdbId; changed = true; }
           if (changed) updated++;
           return;
@@ -1027,6 +1110,7 @@
           title: item.title,
           director: item.director,
           runtime,
+          year: item.year || null,
           currentMinute: item.status === 'seen' ? runtime : 0,
           status: item.status || 'seen',
           rating: 0,
@@ -1148,6 +1232,7 @@
           if (details.poster) movie.poster = details.poster;
           if (details.runtime) movie.runtime = details.runtime;
           if (details.director) movie.director = details.director;
+          if (details.year) movie.year = details.year;
           movie.tmdbId = match.id;
           if (details.overview && !movie.synopsis) movie.synopsis = truncateSynopsis(details.overview);
           improved++;

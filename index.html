@@ -98,6 +98,7 @@
               <option value="title">Titre (A→Z)</option>
               <option value="director">Réalisateur (A→Z)</option>
               <option value="rating">Meilleures notes</option>
+              <option value="year">Date de sortie</option>
             </select>
           </div>
         </div>
@@ -142,9 +143,21 @@
         </div>
         <p class="movie-modal-runtime" id="mmRuntime"></p>
 
+        <div class="genre-tags" id="mmGenres" hidden></div>
+
+        <a href="#" target="_blank" rel="noopener" class="trailer-link" id="mmTrailerLink" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none"/></svg>
+          <span>Bande-annonce</span>
+        </a>
+
         <div class="field-block synopsis-block" id="mmSynopsisBlock" hidden>
           <label>Synopsis</label>
           <div class="synopsis-body" id="mmSynopsisBody"></div>
+        </div>
+
+        <div class="field-block cast-block" id="mmCastBlock" hidden>
+          <label>Avec</label>
+          <p class="cast-body" id="mmCastBody"></p>
         </div>
 
         <div class="field-block">
@@ -190,6 +203,11 @@
         <div class="field-block">
           <label for="mmNotes">Notes personnelles</label>
           <textarea id="mmNotes" rows="4" placeholder="Vos impressions sur ce film…"></textarea>
+        </div>
+
+        <div class="field-block similar-block" id="mmSimilarBlock" hidden>
+          <label>Films similaires</label>
+          <div class="similar-strip" id="mmSimilarStrip"></div>
         </div>
 
         <div class="modal-footer">
@@ -245,6 +263,10 @@
         <div class="field-block">
           <label for="afPoster">URL de l'affiche</label>
           <input type="url" id="afPoster" placeholder="https://…">
+        </div>
+        <div class="field-block">
+          <label for="afYear">Année de sortie (optionnel)</label>
+          <input type="number" id="afYear" min="1888" max="2100" placeholder="2010">
         </div>
       </div>
 

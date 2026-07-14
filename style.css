@@ -97,6 +97,10 @@
 
 * { box-sizing: border-box; }
 
+/* L'attribut hidden doit toujours l'emporter, même sur les éléments dont une
+   règle plus bas fixe explicitement `display` (ex. flex sur un conteneur). */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -877,9 +881,85 @@ img { display: block; max-width: 100%; }
 .synopsis-skel .sr-skel-line { height: 9px; }
 
 .movie-modal-runtime {
-  margin: 0 0 20px;
+  margin: 0 0 12px;
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+.genre-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 14px;
+}
+
+.genre-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+
+.trailer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 18px;
+  color: var(--accent-hover);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.trailer-link svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.trailer-link:hover { text-decoration: underline; }
+
+.cast-body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.similar-strip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.similar-strip::-webkit-scrollbar { height: 6px; }
+.similar-strip::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: var(--radius-pill); }
+
+.similar-item {
+  flex: 0 0 auto;
+  width: 68px;
+  cursor: pointer;
+}
+
+.similar-item img {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  background: var(--surface-3);
+  transition: transform 0.2s var(--ease);
+}
+
+.similar-item:hover img { transform: translateY(-3px); }
+
+.similar-item p {
+  margin: 6px 0 0;
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .field-block { margin-bottom: 18px; }

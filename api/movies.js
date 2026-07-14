@@ -29,17 +29,40 @@ export default async function handler(req, res) {
   const id = (req.query.id || '').toString().trim();
 
   if (id) {
-    // Fiche détaillée d'un film : durée + réalisateur + synopsis en un seul appel
-    // (append_to_response=credits évite un second aller-retour pour le réalisateur).
+    // Fiche détaillée d'un film : durée + réalisateur + genres + casting + synopsis
+    // en un seul appel (append_to_response évite plusieurs allers-retours).
+    // Les vidéos sont récupérées séparément, sans filtre de langue, car peu de
+    // bandes-annonces YouTube sont cataloguées en français sur TMDB.
     try {
-      const url = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}?api_key=${apiKey}&language=fr-FR&append_to_response=credits`;
-      const data = await tmdbFetch(url);
+      const detailUrl = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}?api_key=${apiKey}&language=fr-FR&append_to_response=credits,recommendations`;
+      const videosUrl = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}/videos?api_key=${apiKey}`;
+      const [data, videosData] = await Promise.all([
+        tmdbFetch(detailUrl),
+        tmdbFetch(videosUrl).catch(() => ({ results: [] })),
+      ]);
+
       const director = ((data.credits && data.credits.crew) || []).find((c) => c.job === 'Director');
+      const cast = ((data.credits && data.credits.cast) || []).slice(0, 5).map((c) => c.name);
+      const genres = (data.genres || []).map((g) => g.name);
+      const videos = videosData.results || [];
+      const trailer = videos.find((v) => v.site === 'YouTube' && v.type === 'Trailer')
+        || videos.find((v) => v.site === 'YouTube' && v.type === 'Teaser');
+      const similar = ((data.recommendations && data.recommendations.results) || []).slice(0, 8).map((m) => ({
+        id: m.id,
+        title: m.title,
+        year: (m.release_date || '').slice(0, 4),
+        poster: m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '',
+      }));
+
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.status(200).json({
         id: data.id,
         title: data.title,
         director: director ? director.name : '',
+        cast,
+        genres,
+        trailerKey: trailer ? trailer.key : null,
+        similar,
         runtime: data.runtime || 0,
         overview: data.overview || '',
         poster: data.poster_path ? `https://image.tmdb.org/t/p/w780${data.poster_path}` : '',
