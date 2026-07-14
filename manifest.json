@@ -1,6 +1,6 @@
 {
-  "name": "La Bobine — Suivi de films",
-  "short_name": "La Bobine",
+  "name": "FILMLIOGRAPHIE — Suivi de films",
+  "short_name": "FILMLIOGRAPHIE",
   "description": "Suivez vos films : progression, notes, listes et statistiques.",
   "start_url": "./index.html",
   "scope": "./",

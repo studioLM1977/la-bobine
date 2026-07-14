@@ -1,4 +1,4 @@
-const CACHE_NAME = 'la-bobine-shell-v1';
+const CACHE_NAME = 'filmliographie-shell-v1';
 const SHELL_FILES = [
   './',
   './index.html',

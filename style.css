@@ -193,6 +193,8 @@ img { display: block; max-width: 100%; }
   color: var(--text-primary);
 }
 
+.brand-highlight { color: var(--accent); }
+
 .brand-mark {
   width: 26px;
   height: 26px;
