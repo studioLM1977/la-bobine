@@ -103,13 +103,22 @@
           </div>
         </div>
       </div>
+      <div class="filter-row" id="genreFilterRow" hidden></div>
+      <div class="filter-row" id="decadeFilterRow" hidden></div>
       <div class="movie-grid" id="movieGrid"></div>
       <div class="empty-state" id="emptyState" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="5" width="20" height="14" rx="2"/>
           <path d="M7 5v14M17 5v14M2 9h5M2 15h5M17 9h5M17 15h5"/>
+          <circle cx="9.5" cy="11" r="0.75" fill="currentColor" stroke="none"/>
+          <circle cx="14.5" cy="11" r="0.75" fill="currentColor" stroke="none"/>
+          <path d="M9 15c.7.7 1.8 1 3 1s2.3-.3 3-1"/>
         </svg>
         <p>Aucun film ici pour le moment.</p>
+        <button type="button" class="btn btn-primary" id="emptyStateAddBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Ajouter mon premier film</span>
+        </button>
       </div>
     </section>
 
@@ -149,6 +158,12 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none"/></svg>
           <span>Bande-annonce</span>
         </a>
+
+        <div class="field-block watch-block" id="mmWatchBlock" hidden>
+          <label>Où le regarder</label>
+          <div class="watch-providers" id="mmWatchProviders"></div>
+          <a href="#" target="_blank" rel="noopener" class="watch-attribution" id="mmWatchAttribution" hidden>Données via JustWatch</a>
+        </div>
 
         <div class="field-block synopsis-block" id="mmSynopsisBlock" hidden>
           <label>Synopsis</label>

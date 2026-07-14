@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     // Les vidéos sont récupérées séparément, sans filtre de langue, car peu de
     // bandes-annonces YouTube sont cataloguées en français sur TMDB.
     try {
-      const detailUrl = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}?api_key=${apiKey}&language=fr-FR&append_to_response=credits,recommendations`;
+      const detailUrl = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}?api_key=${apiKey}&language=fr-FR&append_to_response=credits,recommendations,watch/providers`;
       const videosUrl = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}/videos?api_key=${apiKey}`;
       const [data, videosData] = await Promise.all([
         tmdbFetch(detailUrl),
@@ -54,6 +54,20 @@ export default async function handler(req, res) {
         poster: m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '',
       }));
 
+      // "Où le regarder" : données JustWatch redistribuées par TMDB (région France).
+      // Attribution obligatoire : le lien renvoyé (wp.link) doit rester visible.
+      const mapProviders = (list) => (list || []).map((p) => ({
+        name: p.provider_name,
+        logo: p.logo_path ? `https://image.tmdb.org/t/p/w92${p.logo_path}` : '',
+      }));
+      const wp = (data['watch/providers'] && data['watch/providers'].results && data['watch/providers'].results.FR) || null;
+      const watchProviders = wp ? {
+        link: wp.link || null,
+        flatrate: mapProviders(wp.flatrate),
+        rent: mapProviders(wp.rent),
+        buy: mapProviders(wp.buy),
+      } : null;
+
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.status(200).json({
         id: data.id,
@@ -63,6 +77,7 @@ export default async function handler(req, res) {
         genres,
         trailerKey: trailer ? trailer.key : null,
         similar,
+        watchProviders,
         runtime: data.runtime || 0,
         overview: data.overview || '',
         poster: data.poster_path ? `https://image.tmdb.org/t/p/w780${data.poster_path}` : '',
