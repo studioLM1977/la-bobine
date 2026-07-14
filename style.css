@@ -1417,13 +1417,15 @@ textarea { resize: vertical; font-family: inherit; }
 
   .topbar-search { grid-column: 1 / -1; order: 3; }
   .topbar-actions .btn span { display: none; }
-  .topbar-actions .btn { padding: 11px; }
+  .topbar-actions .btn { padding: 9px; }
 
-  .topbar-actions { gap: 8px; }
-  #improvePostersBtn { padding: 8px 10px; }
-  #improvePostersBtn span { display: inline; font-size: 11.5px; }
-  #improvePostersBtn svg { width: 15px; height: 15px; }
-  .brand span { font-size: 17px; }
+  /* Sur mobile, tous les boutons de la topbar passent en icône seule (y
+     compris "Affiches", auparavant gardé étiqueté) : avec 4 boutons dans
+     une largeur restreinte, garder un libellé texte poussait l'avatar
+     hors de l'écran. */
+  .topbar-actions { gap: 4px; }
+  .brand span { font-size: 15.5px; }
+  .brand-mark { width: 22px; height: 22px; }
 
   .fab { display: flex; }
 
