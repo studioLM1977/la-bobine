@@ -828,6 +828,13 @@ img { display: block; max-width: 100%; }
   gap: 28px;
 }
 
+.movie-modal-info {
+  /* Sans ça, la colonne d'infos ne peut pas rétrécir sous la taille de son
+     contenu (bande de casting, logos de plateformes...) : le comportement
+     par défaut d'un item de grille force le débordement du modal entier. */
+  min-width: 0;
+}
+
 .movie-modal-cover {
   position: relative;
   border-radius: var(--radius-md);
