@@ -795,6 +795,12 @@ img { display: block; max-width: 100%; }
 .movie-modal { max-width: 640px; padding: 32px; }
 .add-modal { max-width: 460px; padding: 32px; }
 
+.recommend-intro {
+  margin: -8px 0 16px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
 .modal-close {
   position: absolute;
   top: 20px;

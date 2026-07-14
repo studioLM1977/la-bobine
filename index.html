@@ -48,6 +48,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg>
         <span>Affiches</span>
       </button>
+      <button class="btn btn-ghost" id="recommendBtn" title="Suggestions basées sur vos films notés">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>
+        <span>Suggestions IA</span>
+      </button>
       <button class="btn btn-primary" id="openAddBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         <span>Ajouter un film</span>
@@ -244,6 +248,7 @@
 
     <div class="mode-tabs" id="modeTabs">
       <button type="button" class="mode-tab is-active" data-mode="search">Rechercher</button>
+      <button type="button" class="mode-tab" data-mode="describe">Décrire</button>
       <button type="button" class="mode-tab" data-mode="manual">Saisie manuelle</button>
     </div>
 
@@ -264,6 +269,18 @@
             <button type="button" class="link-btn" id="srChangeBtn">‹ Choisir un autre film</button>
           </div>
         </div>
+      </div>
+
+      <div id="describeModeBlock" hidden>
+        <div class="field-block">
+          <label for="describeInput">Décrivez le film (intrigue, acteur, scène culte…)</label>
+          <textarea id="describeInput" rows="3" placeholder="Ex. le film où un type revit la même journée en boucle, avec Bill Murray"></textarea>
+        </div>
+        <button type="button" class="btn btn-ghost" id="describeSubmitBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>
+          <span>Identifier le film</span>
+        </button>
+        <div class="sr-results" id="describeResults"></div>
       </div>
 
       <div id="manualFieldsBlock" hidden>
@@ -303,6 +320,18 @@
         <button type="submit" class="btn btn-primary" id="addSubmitBtn" disabled>Ajouter à ma filmothèque</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Modale suggestions IA -->
+<div class="modal-overlay" id="recommendModalOverlay">
+  <div class="modal add-modal" role="dialog" aria-modal="true">
+    <button class="modal-close" data-close>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h3>Suggestions IA</h3>
+    <p class="recommend-intro">Basées sur les films que vous avez notés.</p>
+    <div class="sr-results" id="recommendResults"></div>
   </div>
 </div>
 

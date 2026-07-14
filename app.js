@@ -841,6 +841,7 @@
   const addForm = document.getElementById('addForm');
   const addSubmitBtn = document.getElementById('addSubmitBtn');
   const searchModeBlock = document.getElementById('searchModeBlock');
+  const describeModeBlock = document.getElementById('describeModeBlock');
   const manualFieldsBlock = document.getElementById('manualFieldsBlock');
   const runtimeBlock = document.getElementById('runtimeBlock');
   const srQuery = document.getElementById('srQuery');
@@ -875,6 +876,7 @@
     addMode = mode;
     document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('is-active', t.dataset.mode === mode));
     searchModeBlock.hidden = mode !== 'search';
+    describeModeBlock.hidden = mode !== 'describe';
     manualFieldsBlock.hidden = mode !== 'manual';
 
     if (mode === 'manual') {
@@ -928,8 +930,8 @@
     }
   }
 
-  function renderSrSkeleton() {
-    srResults.innerHTML = Array.from({ length: 4 }).map(() => `
+  function renderSrSkeleton(target = srResults) {
+    target.innerHTML = Array.from({ length: 4 }).map(() => `
       <div class="sr-result-skeleton">
         <div class="sr-skel-cover"></div>
         <div class="sr-skel-lines">
@@ -1013,6 +1015,107 @@
     srQuery.focus();
   });
 
+  // ---- Décrire : identification d'un film par description libre (IA) ----
+
+  const describeInput = document.getElementById('describeInput');
+  const describeResults = document.getElementById('describeResults');
+  const describeSubmitBtn = document.getElementById('describeSubmitBtn');
+
+  function renderCandidateRow(container, item, onPick, metaText) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'sr-result-row';
+    row.innerHTML = `
+      <div class="sr-result-cover">${item.poster ? `<img src="${escapeAttr(item.poster)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</div>
+      <div class="sr-result-info">
+        <p class="sr-result-title">${escapeHtml(item.title)}</p>
+        <p class="sr-result-meta">${escapeHtml(metaText)}</p>
+      </div>
+    `;
+    row.addEventListener('click', () => onPick(item));
+    container.appendChild(row);
+  }
+
+  describeSubmitBtn.addEventListener('click', async () => {
+    const description = describeInput.value.trim();
+    if (!description || describeSubmitBtn.disabled) return;
+
+    describeSubmitBtn.disabled = true;
+    describeSubmitBtn.classList.add('is-busy');
+    renderSrSkeleton(describeResults);
+
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'identify', description }),
+      });
+      if (!res.ok) throw new Error('IA indisponible');
+      const data = await res.json();
+      const items = data.results || [];
+
+      describeResults.innerHTML = '';
+      if (items.length === 0) {
+        describeResults.innerHTML = '<p class="sr-empty">Aucune piste trouvée. Essayez de reformuler, ou passez en recherche/saisie manuelle.</p>';
+      } else {
+        items.forEach(item => renderCandidateRow(describeResults, item, (picked) => {
+          setAddMode('search');
+          selectMovie(picked);
+        }, item.year || ''));
+      }
+    } catch (err) {
+      describeResults.innerHTML = '<p class="sr-error">IA indisponible pour le moment. Essayez la recherche classique.</p>';
+    } finally {
+      describeSubmitBtn.disabled = false;
+      describeSubmitBtn.classList.remove('is-busy');
+    }
+  });
+
+  // ---- Suggestions IA basées sur les films notés ----
+
+  const recommendModalOverlay = document.getElementById('recommendModalOverlay');
+  const recommendResults = document.getElementById('recommendResults');
+
+  document.getElementById('recommendBtn').addEventListener('click', async () => {
+    recommendModalOverlay.classList.add('is-open');
+
+    const rated = movies.filter(m => m.rating > 0);
+    if (rated.length === 0) {
+      recommendResults.innerHTML = '<p class="sr-empty">Notez au moins un film pour obtenir des suggestions.</p>';
+      return;
+    }
+
+    renderSrSkeleton(recommendResults);
+
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'recommend',
+          movies: rated.map(m => ({ title: m.title, director: m.director, genres: m.genres || [], rating: m.rating })),
+        }),
+      });
+      if (!res.ok) throw new Error('IA indisponible');
+      const data = await res.json();
+      const items = data.suggestions || [];
+
+      recommendResults.innerHTML = '';
+      if (items.length === 0) {
+        recommendResults.innerHTML = '<p class="sr-empty">Aucune suggestion pour le moment.</p>';
+      } else {
+        items.forEach(item => renderCandidateRow(recommendResults, item, (picked) => {
+          recommendModalOverlay.classList.remove('is-open');
+          openAddModal();
+          setAddMode('search');
+          selectMovie(picked);
+        }, item.reason || ''));
+      }
+    } catch (err) {
+      recommendResults.innerHTML = '<p class="sr-error">Suggestions indisponibles pour le moment.</p>';
+    }
+  });
+
   function openAddModal() {
     addForm.reset();
     afSelectedStatus = 'want';
@@ -1020,6 +1123,8 @@
     selectedMovie = null;
     srSelected.hidden = true;
     srResults.innerHTML = '';
+    describeInput.value = '';
+    describeResults.innerHTML = '';
     setAddMode('search');
     addModalOverlay.classList.add('is-open');
     setTimeout(() => srQuery.focus(), 150);
@@ -1120,6 +1225,7 @@
     const doClose = () => {
       movieModalOverlay.classList.remove('is-open');
       addModalOverlay.classList.remove('is-open');
+      recommendModalOverlay.classList.remove('is-open');
       activeMovieId = null;
     };
 
@@ -1136,7 +1242,7 @@
   }
 
   document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', closeModals));
-  [movieModalOverlay, addModalOverlay].forEach(overlay => {
+  [movieModalOverlay, addModalOverlay, recommendModalOverlay].forEach(overlay => {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModals(); });
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModals(); closeSettingsPopover(); } });
