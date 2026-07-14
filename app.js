@@ -1538,7 +1538,8 @@
 
   const avatarBtn = document.getElementById('avatarBtn');
   const settingsPopover = document.getElementById('settingsPopover');
-  const themeOptions = document.querySelectorAll('.theme-option');
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const themeToggleLabel = document.getElementById('themeToggleLabel');
 
   function currentTheme() {
     const saved = localStorage.getItem(THEME_KEY);
@@ -1548,7 +1549,8 @@
 
   function markActiveTheme() {
     const active = currentTheme();
-    themeOptions.forEach(btn => btn.classList.toggle('is-active', btn.dataset.theme === active));
+    themeToggleBtn.classList.toggle('is-dark', active === 'dark');
+    themeToggleLabel.textContent = active === 'dark' ? 'Sombre' : 'Clair';
   }
 
   function setTheme(theme) {
@@ -1580,8 +1582,8 @@
     }
   });
 
-  themeOptions.forEach(btn => {
-    btn.addEventListener('click', () => setTheme(btn.dataset.theme));
+  themeToggleBtn.addEventListener('click', () => {
+    setTheme(currentTheme() === 'dark' ? 'light' : 'dark');
   });
 
   // ---------- Init ----------
