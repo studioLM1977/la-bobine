@@ -1398,7 +1398,10 @@ textarea { resize: vertical; font-family: inherit; }
 /* ---------- Responsive ---------- */
 
 @media (max-width: 860px) {
-  .app { padding: 0 18px 100px; }
+  /* Marge basse généreuse : certains navigateurs intégrés (liens ouverts
+     depuis une autre app) affichent une barre d'outils flottante par-dessus
+     le contenu plutôt que de lui réserver de la place. */
+  .app { padding: 0 18px calc(140px + env(safe-area-inset-bottom, 0px)); }
 
   .topbar {
     grid-template-columns: 1fr auto;
