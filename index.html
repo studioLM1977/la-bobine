@@ -302,6 +302,28 @@
           <button type="button" class="chip" data-status="dnf">Abandonné</button>
         </div>
       </div>
+
+      <div class="field-block" id="afRatingBlock" hidden>
+        <label>Note</label>
+        <div class="stars" id="afStars" data-value="0">
+          <div class="stars-bg">
+            <svg viewBox="0 0 24 24"><use href="#star-icon"/></svg>
+            <svg viewBox="0 0 24 24"><use href="#star-icon"/></svg>
+            <svg viewBox="0 0 24 24"><use href="#star-icon"/></svg>
+            <svg viewBox="0 0 24 24"><use href="#star-icon"/></svg>
+            <svg viewBox="0 0 24 24"><use href="#star-icon"/></svg>
+          </div>
+          <div class="stars-fill" id="afStarsFill">
+            <svg viewBox="0 0 24 24"><use href="#star-icon-fill"/></svg>
+            <svg viewBox="0 0 24 24"><use href="#star-icon-fill"/></svg>
+            <svg viewBox="0 0 24 24"><use href="#star-icon-fill"/></svg>
+            <svg viewBox="0 0 24 24"><use href="#star-icon-fill"/></svg>
+            <svg viewBox="0 0 24 24"><use href="#star-icon-fill"/></svg>
+          </div>
+        </div>
+        <span class="stars-value" id="afStarsValue">Pas encore noté</span>
+      </div>
+
       <div class="modal-footer">
         <button type="submit" class="btn btn-primary" id="addSubmitBtn" disabled>Ajouter à ma filmothèque</button>
       </div>

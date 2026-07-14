@@ -664,6 +664,12 @@
     (v) => { document.getElementById('mmStarsValue').textContent = v > 0 ? v + ' / 5' : 'Pas encore noté'; }
   );
 
+  const afStars = setupStarWidget(
+    document.getElementById('afStars'),
+    document.getElementById('afStarsFill'),
+    (v) => { document.getElementById('afStarsValue').textContent = v > 0 ? v + ' / 5' : 'Pas encore noté'; }
+  );
+
   // ---------- Modale fiche film ----------
 
   const movieModalOverlay = document.getElementById('movieModalOverlay');
@@ -829,6 +835,8 @@
   let srAbortController = null;
   let srDebounceTimer = null;
 
+  const afRatingBlock = document.getElementById('afRatingBlock');
+
   afStatusChips.addEventListener('click', (e) => {
     const chip = e.target.closest('.chip');
     if (!chip) return;
@@ -836,6 +844,7 @@
     haptic(12);
     afSelectedStatus = chip.dataset.status;
     updateStatusChips(afStatusChips, afSelectedStatus);
+    afRatingBlock.hidden = afSelectedStatus !== 'seen';
   });
 
   // ---- Bascule Recherche / Saisie manuelle ----
@@ -1170,6 +1179,8 @@
     addForm.reset();
     afSelectedStatus = 'want';
     updateStatusChips(afStatusChips, afSelectedStatus);
+    afRatingBlock.hidden = true;
+    afStars.set(0);
     selectedMovie = null;
     srSelected.hidden = true;
     srResults.innerHTML = '';
@@ -1241,7 +1252,7 @@
       year,
       genres,
       status: afSelectedStatus,
-      rating: 0,
+      rating: afSelectedStatus === 'seen' ? afStars.get() : 0,
       notes: '',
       poster: poster || fallbackCover(title),
       tmdbId,

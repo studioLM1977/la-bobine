@@ -1337,6 +1337,15 @@ textarea { resize: vertical; font-family: inherit; }
   font-variant-numeric: tabular-nums;
 }
 
+#afRatingBlock:not([hidden]) {
+  animation: rating-reveal 0.4s var(--ease-spring);
+}
+
+@keyframes rating-reveal {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .modal-footer {
   display: flex;
   justify-content: flex-end;
