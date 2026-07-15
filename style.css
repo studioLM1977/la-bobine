@@ -389,6 +389,46 @@ img { display: block; max-width: 100%; }
 .fab:active { transform: scale(0.94); }
 .fab svg { width: 24px; height: 24px; }
 
+/* ---------- Indicateur de synchro cloud ---------- */
+
+.sync-status {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-card);
+  z-index: 30;
+}
+
+.sync-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6fd39a;
+  flex: none;
+}
+
+.sync-status[data-state="pending"] .sync-status-dot {
+  background: #f5b400;
+  animation: sync-pulse 1s ease-in-out infinite;
+}
+
+.sync-status[data-state="offline"] .sync-status-dot { background: var(--danger); }
+
+@keyframes sync-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 /* ---------- Sections ---------- */
 
 .section { margin-top: 44px; }

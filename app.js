@@ -1606,23 +1606,55 @@
 
   const SYNC_URL = '/api/library';
   let syncTimer = null;
+  // true tant que le dernier changement local n'est pas confirmé reçu par le
+  // cloud (aucune retentative auto en cas d'échec réseau auparavant : un
+  // changement fait hors-ligne juste avant un vidage de stockage était perdu
+  // pour de bon). Sert aussi à piloter l'indicateur visuel de synchro.
+  let syncPending = false;
+
+  function setSyncStatus(state) {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    el.dataset.state = state;
+    const labels = { synced: 'Synchronisé', pending: 'Synchronisation…', offline: 'Hors ligne — en attente' };
+    document.getElementById('syncStatusText').textContent = labels[state] || '';
+  }
 
   function queueSync() {
+    syncPending = true;
+    setSyncStatus('pending');
     clearTimeout(syncTimer);
     syncTimer = setTimeout(syncNow, 800);
   }
 
-  // Envoi sans délai : utilisé pour les suppressions, où le débounce classique
-  // laisse une fenêtre pendant laquelle fermer/recharger la page avant l'envoi
-  // ferait revenir l'entrée supprimée au prochain chargement (fusion depuis le cloud).
+  // Envoi sans délai : utilisé pour les suppressions, l'enregistrement d'une
+  // fiche et l'ajout, où le débounce classique laisse une fenêtre pendant
+  // laquelle fermer/recharger la page avant l'envoi ferait revenir l'ancien
+  // état au prochain chargement (fusion/restauration depuis le cloud).
   function syncNow() {
     clearTimeout(syncTimer);
+    syncPending = true;
+    setSyncStatus('pending');
     fetch(SYNC_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(movies),
-    }).catch(() => { /* hors-ligne : on retentera au prochain changement */ });
+    }).then((res) => {
+      if (!res.ok) throw new Error('sync failed');
+      syncPending = false;
+      setSyncStatus('synced');
+    }).catch(() => {
+      // Reste "pending" : retenté automatiquement dès le retour de connexion
+      // ou quand l'app repasse au premier plan (voir plus bas), en plus du
+      // prochain changement qui renverrait de toute façon l'état complet.
+      setSyncStatus('offline');
+    });
   }
+
+  window.addEventListener('online', () => { if (syncPending) syncNow(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && syncPending) syncNow();
+  });
 
   async function syncFromServer() {
     try {
@@ -1642,7 +1674,10 @@
         return;
       }
       applyImport(data.books, { silent: true });
-    } catch (err) { /* hors-ligne : le cache local reste la référence */ }
+      setSyncStatus('synced');
+    } catch (err) {
+      setSyncStatus('offline');
+    }
   }
 
   function importFromUrl() {
