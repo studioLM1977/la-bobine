@@ -31,22 +31,26 @@ export default async function handler(req, res) {
   if (id) {
     // Fiche détaillée d'un film : durée + réalisateur + genres + casting + synopsis
     // en un seul appel (append_to_response évite plusieurs allers-retours).
-    // Les vidéos sont récupérées séparément, sans filtre de langue, car peu de
-    // bandes-annonces YouTube sont cataloguées en français sur TMDB.
+    // Les vidéos sont récupérées à part, en deux temps : d'abord filtrées en
+    // français, puis sans filtre de langue en repli si aucune n'existe (peu
+    // de bandes-annonces YouTube sont cataloguées en français sur TMDB, mais
+    // mieux vaut proposer une bande-annonce en VO que rien du tout).
     try {
       const detailUrl = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}?api_key=${apiKey}&language=fr-FR&append_to_response=credits,recommendations,watch/providers`;
-      const videosUrl = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}/videos?api_key=${apiKey}`;
-      const [data, videosData] = await Promise.all([
+      const videosUrlFr = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}/videos?api_key=${apiKey}&language=fr-FR`;
+      const videosUrlAny = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}/videos?api_key=${apiKey}`;
+      const [data, videosFr, videosAny] = await Promise.all([
         tmdbFetch(detailUrl),
-        tmdbFetch(videosUrl).catch(() => ({ results: [] })),
+        tmdbFetch(videosUrlFr).catch(() => ({ results: [] })),
+        tmdbFetch(videosUrlAny).catch(() => ({ results: [] })),
       ]);
 
       const director = ((data.credits && data.credits.crew) || []).find((c) => c.job === 'Director');
       const cast = ((data.credits && data.credits.cast) || []).slice(0, 5).map((c) => c.name);
       const genres = (data.genres || []).map((g) => g.name);
-      const videos = videosData.results || [];
-      const trailer = videos.find((v) => v.site === 'YouTube' && v.type === 'Trailer')
+      const findTrailer = (videos) => videos.find((v) => v.site === 'YouTube' && v.type === 'Trailer')
         || videos.find((v) => v.site === 'YouTube' && v.type === 'Teaser');
+      const trailer = findTrailer(videosFr.results || []) || findTrailer(videosAny.results || []);
       const similar = ((data.recommendations && data.recommendations.results) || []).slice(0, 8).map((m) => ({
         id: m.id,
         title: m.title,
