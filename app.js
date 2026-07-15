@@ -297,6 +297,14 @@
     el.innerHTML = genres.map(g => `<span class="genre-tag">${escapeHtml(g)}</span>`).join('');
   }
 
+  function renderTmdbRating(voteAverage, voteCount) {
+    const block = document.getElementById('mmTmdbRating');
+    if (!voteAverage || !voteCount) { block.hidden = true; return; }
+    block.hidden = false;
+    const countLabel = voteCount >= 1000 ? Math.round(voteCount / 100) / 10 + ' k' : voteCount;
+    document.getElementById('mmTmdbRatingValue').textContent = `${voteAverage.toFixed(1)}/10 TMDB (${countLabel} votes)`;
+  }
+
   function renderCast(cast) {
     const block = document.getElementById('mmCastBlock');
     if (!cast || cast.length === 0) { block.hidden = true; return; }
@@ -420,6 +428,7 @@
     renderTrailer(null);
     renderSimilar(null);
     renderWatchProviders(null);
+    renderTmdbRating(null, null);
 
     try {
       const mediaType = movie.mediaType || 'movie';
@@ -442,6 +451,7 @@
       renderCast(details.cast);
       renderSimilar(details.similar, mediaType);
       renderWatchProviders(details.watchProviders);
+      renderTmdbRating(details.voteAverage, details.voteCount);
 
       if (trailerAlreadyResolved) {
         renderTrailer(movie.trailerKey || null, movie.trailerSearchQuery || null);

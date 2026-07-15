@@ -102,6 +102,8 @@ export default async function handler(req, res) {
         overview: data.overview || '',
         poster: data.poster_path ? `https://image.tmdb.org/t/p/w780${data.poster_path}` : '',
         year: (data.first_air_date || '').slice(0, 4),
+        voteAverage: data.vote_average || 0,
+        voteCount: data.vote_count || 0,
       });
     } catch (err) {
       res.status(502).json(err);

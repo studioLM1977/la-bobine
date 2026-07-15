@@ -900,6 +900,18 @@ img { display: block; max-width: 100%; }
   color: var(--text-secondary);
 }
 
+.tmdb-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tmdb-rating svg { width: 14px; height: 14px; color: var(--star); fill: var(--star); }
+
 .genre-tags {
   display: flex;
   flex-wrap: wrap;
