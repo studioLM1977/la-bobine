@@ -109,6 +109,11 @@ html, body {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  /* Empêche le double-tap-zoom (le zoom pincé est bloqué côté JS, voir
+     app.js) : garde l'app toujours cadrée en pleine page. */
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* ---------- Ambient mesh + grain ---------- */

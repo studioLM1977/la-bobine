@@ -7,6 +7,15 @@
     document.documentElement.setAttribute('data-theme', savedTheme);
   }
 
+  // ---------- Zoom désactivé (l'app reste toujours cadrée en pleine page) ----------
+  // Le double-tap-zoom est bloqué par `touch-action: manipulation` en CSS ;
+  // ici on bloque en plus le pincer-zoomer (geste à deux doigts), que le
+  // viewport meta seul ne suffit pas à empêcher sur tous les navigateurs.
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+
   const LEGACY_STORAGE_KEY = 'la-bobine.movies';
   const MEDIA_TYPE_KEY = 'la-bobine.mediaType';
 
