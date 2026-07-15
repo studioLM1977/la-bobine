@@ -2,6 +2,7 @@
 // (variable d'env Vercel), jamais exposée dans le JS envoyé au navigateur.
 export default async function handler(req, res) {
   const apiKey = process.env.TMDB_API_KEY;
+  const youtubeKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey) {
     res.status(500).json({ error: 'Clé TMDB non configurée' });
     return;
@@ -31,10 +32,11 @@ export default async function handler(req, res) {
   if (id) {
     // Fiche détaillée d'un film : durée + réalisateur + genres + casting + synopsis
     // en un seul appel (append_to_response évite plusieurs allers-retours).
-    // TMDB catalogue très peu de bandes-annonces réellement en français : on
-    // ne propose un lien direct que si une vidéo fr-FR existe vraiment, sinon
-    // on renvoie une requête de recherche YouTube ("<titre> bande annonce VF")
-    // plutôt que d'afficher une vidéo anglaise sous une étiquette trompeuse.
+    // TMDB catalogue très peu de bandes-annonces réellement en français : en
+    // repli, une recherche YouTube Data API ciblée trouve la vraie vidéo FR
+    // (quota limité à 100 requêtes/jour, d'où skipYoutube : le client ne la
+    // redemande qu'une fois par film, jamais à chaque réouverture de fiche).
+    const skipYoutube = (req.query.skipYoutube || '') === '1';
     try {
       const detailUrl = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}?api_key=${apiKey}&language=fr-FR&append_to_response=credits,recommendations,watch/providers`;
       const videosUrlFr = `https://api.themoviedb.org/3/movie/${encodeURIComponent(id)}/videos?api_key=${apiKey}&language=fr-FR`;
@@ -47,8 +49,21 @@ export default async function handler(req, res) {
       const cast = ((data.credits && data.credits.cast) || []).slice(0, 5).map((c) => c.name);
       const genres = (data.genres || []).map((g) => g.name);
       const videos = videosFr.results || [];
-      const trailer = videos.find((v) => v.site === 'YouTube' && v.type === 'Trailer')
+      const tmdbTrailer = videos.find((v) => v.site === 'YouTube' && v.type === 'Trailer')
         || videos.find((v) => v.site === 'YouTube' && v.type === 'Teaser');
+
+      let trailerKey = tmdbTrailer ? tmdbTrailer.key : null;
+      if (!trailerKey && youtubeKey && !skipYoutube) {
+        try {
+          const q = `${data.title} bande annonce VF`;
+          const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&videoDuration=short&relevanceLanguage=fr&q=${encodeURIComponent(q)}&key=${youtubeKey}`;
+          const yr = await fetch(searchUrl);
+          const ydata = await yr.json();
+          const item = (ydata.items || [])[0];
+          if (item && item.id && item.id.videoId) trailerKey = item.id.videoId;
+        } catch (err) { /* on retombe sur le lien de recherche */ }
+      }
+
       const similar = ((data.recommendations && data.recommendations.results) || []).slice(0, 8).map((m) => ({
         id: m.id,
         title: m.title,
@@ -77,8 +92,8 @@ export default async function handler(req, res) {
         director: director ? director.name : '',
         cast,
         genres,
-        trailerKey: trailer ? trailer.key : null,
-        trailerSearchQuery: trailer ? null : `${data.title} bande annonce VF`,
+        trailerKey,
+        trailerSearchQuery: trailerKey ? null : `${data.title} bande annonce VF`,
         similar,
         watchProviders,
         runtime: data.runtime || 0,

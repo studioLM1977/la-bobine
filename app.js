@@ -180,8 +180,8 @@
     return data.results || [];
   }
 
-  async function getMovieDetails(tmdbId) {
-    const url = `/api/movies?id=${encodeURIComponent(tmdbId)}`;
+  async function getMovieDetails(tmdbId, skipYoutube) {
+    const url = `/api/movies?id=${encodeURIComponent(tmdbId)}${skipYoutube ? '&skipYoutube=1' : ''}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('TMDB indisponible');
     return res.json();
@@ -341,14 +341,28 @@
       }
       if (activeMovieId !== movieId || !tmdbId) return;
 
-      const details = await getMovieDetails(tmdbId);
+      // La bande-annonce (recherche YouTube en repli) n'est résolue qu'une
+      // seule fois par film et mémorisée : le quota YouTube Data API est
+      // limité à 100 requêtes/jour, inutile de la redemander à chaque
+      // réouverture de la fiche.
+      const trailerAlreadyResolved = movie.trailerResolved === true;
+      const details = await getMovieDetails(tmdbId, trailerAlreadyResolved);
       if (activeMovieId !== movieId) return;
 
       renderGenres(details.genres);
       renderCast(details.cast);
-      renderTrailer(details.trailerKey, details.trailerSearchQuery);
       renderSimilar(details.similar);
       renderWatchProviders(details.watchProviders);
+
+      if (trailerAlreadyResolved) {
+        renderTrailer(movie.trailerKey || null, movie.trailerSearchQuery || null);
+      } else {
+        renderTrailer(details.trailerKey, details.trailerSearchQuery);
+        movie.trailerKey = details.trailerKey || null;
+        movie.trailerSearchQuery = details.trailerSearchQuery || null;
+        movie.trailerResolved = true;
+        saveMovies();
+      }
 
       // Mémorisé une seule fois pour permettre le filtrage par genre dans la grille.
       if (!movie.genres && details.genres && details.genres.length) {
