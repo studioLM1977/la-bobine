@@ -1910,7 +1910,8 @@
   function currentTheme() {
     const saved = localStorage.getItem(THEME_KEY);
     if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    // Mode Clair par défaut, quel que soit le réglage système.
+    return 'light';
   }
 
   function markActiveTheme() {
