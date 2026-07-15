@@ -1045,7 +1045,10 @@
       const ok = document.getElementById('afTitle').value.trim() && document.getElementById('afDirector').value.trim() && parseInt(afRuntimeInput.value, 10) > 0;
       addSubmitBtn.disabled = !ok;
     } else {
-      addSubmitBtn.disabled = !selectedMovie || !(parseInt(afRuntimeInput.value, 10) > 0);
+      // La durée vient de TMDB en best-effort (surtout pour les séries, où
+      // elle manque souvent) : on ne bloque pas l'ajout si elle est absente,
+      // contrairement à la saisie manuelle où l'utilisateur la renseigne lui-même.
+      addSubmitBtn.disabled = !selectedMovie;
     }
   }
 

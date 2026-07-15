@@ -89,7 +89,14 @@ export default async function handler(req, res) {
         trailerSearchQuery: trailerKey ? null : `${data.name} bande annonce VF`,
         similar,
         watchProviders,
-        runtime: (data.episode_run_time && data.episode_run_time[0]) || 0,
+        // `episode_run_time` est déprécié côté TMDB et revient vide pour la
+        // plupart des séries récentes : on retombe sur la durée du dernier
+        // (ou prochain) épisode diffusé, seuls champs encore renseignés dans
+        // ce cas.
+        runtime: (data.episode_run_time && data.episode_run_time[0])
+          || (data.last_episode_to_air && data.last_episode_to_air.runtime)
+          || (data.next_episode_to_air && data.next_episode_to_air.runtime)
+          || 0,
         seasons: data.number_of_seasons || 0,
         episodes: data.number_of_episodes || 0,
         overview: data.overview || '',
