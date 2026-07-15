@@ -270,15 +270,63 @@
     if (key) {
       link.hidden = false;
       link.href = `https://www.youtube.com/watch?v=${encodeURIComponent(key)}`;
+      link.dataset.trailerKey = key;
       label.textContent = 'Bande-annonce';
     } else if (searchQuery) {
       link.hidden = false;
       link.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
+      delete link.dataset.trailerKey;
       label.textContent = 'Chercher la bande-annonce VF';
     } else {
       link.hidden = true;
+      delete link.dataset.trailerKey;
     }
   }
+
+  // ---------- Lecteur bande-annonce plein écran ----------
+  // Quand on a une vraie vidéo (trailerKey), on la lit dans un lecteur intégré
+  // qui occupe tout le viewport et demande le vrai mode plein écran natif,
+  // plutôt que de renvoyer vers l'app/site YouTube.
+
+  const trailerOverlay = document.getElementById('trailerOverlay');
+  const trailerOverlayFrame = document.getElementById('trailerOverlayFrame');
+
+  function openTrailerOverlay(key) {
+    trailerOverlayFrame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(key)}?autoplay=1&playsinline=1&rel=0" title="Bande-annonce" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+    trailerOverlay.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    const requestFs = trailerOverlay.requestFullscreen || trailerOverlay.webkitRequestFullscreen;
+    if (requestFs) {
+      try { requestFs.call(trailerOverlay).catch(() => {}); } catch (err) { /* pas de plein écran, l'overlay reste plein viewport */ }
+    }
+  }
+
+  function closeTrailerOverlay() {
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+      try { exitFs.call(document).catch(() => {}); } catch (err) { /* ignore */ }
+    }
+    trailerOverlay.classList.remove('is-open');
+    trailerOverlayFrame.innerHTML = '';
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('mmTrailerLink').addEventListener('click', (e) => {
+    const key = e.currentTarget.dataset.trailerKey;
+    if (key) {
+      e.preventDefault();
+      openTrailerOverlay(key);
+    }
+  });
+
+  document.getElementById('trailerOverlayClose').addEventListener('click', closeTrailerOverlay);
+
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach((evt) => {
+    document.addEventListener(evt, () => {
+      const stillFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+      if (!stillFullscreen && trailerOverlay.classList.contains('is-open')) closeTrailerOverlay();
+    });
+  });
 
   function renderSimilar(items) {
     const block = document.getElementById('mmSimilarBlock');

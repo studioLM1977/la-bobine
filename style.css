@@ -1410,6 +1410,52 @@ textarea { resize: vertical; font-family: inherit; }
   z-index: 200;
 }
 
+/* ---------- Lecteur bande-annonce plein écran ---------- */
+
+.trailer-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 300;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s var(--ease);
+}
+
+.trailer-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.trailer-overlay-frame,
+.trailer-overlay-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.trailer-overlay-close {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s var(--ease);
+}
+
+.trailer-overlay-close:hover { background: rgba(0,0,0,0.8); }
+.trailer-overlay-close svg { width: 18px; height: 18px; }
+
 .toast.is-visible {
   opacity: 1;
   transform: translate(-50%, 0);
