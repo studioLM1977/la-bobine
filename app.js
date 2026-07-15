@@ -606,7 +606,7 @@
 
   // ---------- Tri ----------
 
-  let activeSort = 'recent';
+  let activeSort = localStorage.getItem('la-bobine.sort') || 'year';
 
   function sortList(list) {
     const sorted = [...list];
@@ -624,8 +624,10 @@
     }
   }
 
+  document.getElementById('sortSelect').value = activeSort;
   document.getElementById('sortSelect').addEventListener('change', (e) => {
     activeSort = e.target.value;
+    localStorage.setItem('la-bobine.sort', activeSort);
     renderGrid();
   });
 
