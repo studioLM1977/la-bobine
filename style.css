@@ -172,7 +172,10 @@ img { display: block; max-width: 100%; }
 .app {
   max-width: 1320px;
   margin: 0 auto;
-  padding: 0 32px 80px;
+  /* `viewport-fit=cover` (nécessaire pour bloquer le zoom) fait passer la
+     page sous l'encoche/barre de statut : sans cette marge, la topbar s'y
+     chevauchait. */
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 32px 80px;
 }
 
 .topbar {
@@ -469,7 +472,11 @@ img { display: block; max-width: 100%; }
   color: var(--text-secondary);
   box-shadow: var(--shadow-card);
   z-index: 30;
+  opacity: 1;
+  transition: opacity 0.35s var(--ease);
 }
+
+.sync-status.is-hidden { opacity: 0; pointer-events: none; }
 
 .sync-status-dot {
   width: 7px;
@@ -1486,7 +1493,7 @@ textarea { resize: vertical; font-family: inherit; }
   /* Marge basse généreuse : certains navigateurs intégrés (liens ouverts
      depuis une autre app) affichent une barre d'outils flottante par-dessus
      le contenu plutôt que de lui réserver de la place. */
-  .app { padding: 0 18px calc(140px + env(safe-area-inset-bottom, 0px)); }
+  .app { padding: calc(16px + env(safe-area-inset-top, 0px)) 18px calc(140px + env(safe-area-inset-bottom, 0px)); }
 
   .topbar {
     grid-template-columns: 1fr auto;

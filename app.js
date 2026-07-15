@@ -1742,12 +1742,23 @@
   // pour de bon). Sert aussi à piloter l'indicateur visuel de synchro.
   let syncPending = false;
 
+  let syncStatusHideTimer = null;
+
   function setSyncStatus(state) {
     const el = document.getElementById('syncStatus');
     if (!el) return;
+    clearTimeout(syncStatusHideTimer);
+    el.classList.remove('is-hidden');
     el.dataset.state = state;
     const labels = { synced: 'Synchronisé', pending: 'Synchronisation…', offline: 'Hors ligne — en attente' };
     document.getElementById('syncStatusText').textContent = labels[state] || '';
+    // "Synchronisé" s'efface après coup : sinon la pastille fixe reste
+    // visible en permanence par-dessus le contenu pendant le défilement
+    // (elle chevauchait les badges de filtre). Pending/hors-ligne restent
+    // affichés tant qu'il y a quelque chose à signaler.
+    if (state === 'synced') {
+      syncStatusHideTimer = setTimeout(() => el.classList.add('is-hidden'), 1800);
+    }
   }
 
   function queueSync() {
