@@ -264,11 +264,20 @@
     document.getElementById('mmCastBody').textContent = cast.join(', ');
   }
 
-  function renderTrailer(key) {
+  function renderTrailer(key, searchQuery) {
     const link = document.getElementById('mmTrailerLink');
-    if (!key) { link.hidden = true; return; }
-    link.hidden = false;
-    link.href = `https://www.youtube.com/watch?v=${encodeURIComponent(key)}`;
+    const label = document.getElementById('mmTrailerLabel');
+    if (key) {
+      link.hidden = false;
+      link.href = `https://www.youtube.com/watch?v=${encodeURIComponent(key)}`;
+      label.textContent = 'Bande-annonce';
+    } else if (searchQuery) {
+      link.hidden = false;
+      link.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
+      label.textContent = 'Chercher la bande-annonce VF';
+    } else {
+      link.hidden = true;
+    }
   }
 
   function renderSimilar(items) {
@@ -337,7 +346,7 @@
 
       renderGenres(details.genres);
       renderCast(details.cast);
-      renderTrailer(details.trailerKey);
+      renderTrailer(details.trailerKey, details.trailerSearchQuery);
       renderSimilar(details.similar);
       renderWatchProviders(details.watchProviders);
 
