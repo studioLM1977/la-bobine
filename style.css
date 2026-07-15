@@ -747,7 +747,17 @@ img { display: block; max-width: 100%; }
   box-shadow: var(--shadow-card-hover);
 }
 
-.movie-card-cover img { width: 100%; height: 100%; object-fit: cover; }
+.movie-card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.55s var(--ease-soft);
+  will-change: transform;
+}
+
+/* Zoom d'affiche contenu dans le cadre au survol (geste premium, lisible) */
+.movie-card:hover .movie-card-cover img,
+.top-card:hover .top-card-cover img { transform: scale(1.06); }
 
 /* Dégradé de lisibilité en bas de l'affiche : garantit que la note reste
    nette quelle que soit l'image. */
