@@ -1,14 +1,14 @@
-// Proxy serverless vers Groq (LLM) : la clé reste côté serveur (variable d'env
-// Vercel), jamais exposée dans le JS envoyé au navigateur. Les titres suggérés
-// par le modèle sont toujours revérifiés via TMDB (recherche du premier
-// résultat) avant d'être renvoyés au client : ça évite d'afficher un titre
-// halluciné sans affiche ni fiche réelle, et ça fournit directement les
+// Proxy serverless vers Gemini (LLM) : la clé reste côté serveur (variable
+// d'env Vercel), jamais exposée dans le JS envoyé au navigateur. Les titres
+// suggérés par le modèle sont toujours revérifiés via TMDB (recherche du
+// premier résultat) avant d'être renvoyés au client : ça évite d'afficher un
+// titre halluciné sans affiche ni fiche réelle, et ça fournit directement les
 // données nécessaires pour l'ajout à la filmothèque.
 export default async function handler(req, res) {
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   const tmdbKey = process.env.TMDB_API_KEY;
   if (!apiKey) {
-    res.status(500).json({ error: 'Clé Groq non configurée' });
+    res.status(500).json({ error: 'Clé Gemini non configurée' });
     return;
   }
   if (req.method !== 'POST') {
@@ -36,26 +36,28 @@ export default async function handler(req, res) {
     }
   }
 
-  async function askGroq(system, user) {
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  async function askGemini(system, user) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const r = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.6,
+        contents: [{ role: 'user', parts: [{ text: user }] }],
+        systemInstruction: { parts: [{ text: system }] },
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.6,
+        },
       }),
     });
     const data = await r.json();
     if (!r.ok) throw data;
-    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    const content = data.candidates
+      && data.candidates[0]
+      && data.candidates[0].content
+      && data.candidates[0].content.parts
+      && data.candidates[0].content.parts[0]
+      && data.candidates[0].content.parts[0].text;
     return JSON.parse(content);
   }
 
@@ -84,7 +86,7 @@ export default async function handler(req, res) {
         title: m.title, director: m.director, genres: m.genres || [], rating: m.rating,
       })));
 
-      const parsed = await askGroq(system, user);
+      const parsed = await askGemini(system, user);
       const suggestions = (parsed.suggestions || []).slice(0, 8);
       const withPosters = await Promise.all(suggestions.map(async (s) => {
         const match = await tmdbSearchFirst(s.title);
@@ -106,7 +108,7 @@ export default async function handler(req, res) {
         + 'jusqu\'à 5 films candidats, du plus probable au moins probable. Réponds uniquement en '
         + 'JSON strictement de la forme {"titles":["Titre 1","Titre 2"]}.';
 
-      const parsed = await askGroq(system, description);
+      const parsed = await askGemini(system, description);
       const titles = (parsed.titles || []).slice(0, 5);
       const results = await Promise.all(titles.map((t) => tmdbSearchFirst(t)));
 
