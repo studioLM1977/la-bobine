@@ -762,7 +762,7 @@ img { display: block; max-width: 100%; }
 .add-modal { max-width: 460px; padding: 32px; }
 
 .recommend-intro {
-  margin: -8px 0 16px;
+  margin: 6px 0 16px;
   font-size: 13px;
   color: var(--text-tertiary);
 }
