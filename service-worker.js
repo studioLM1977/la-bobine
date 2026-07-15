@@ -1,4 +1,4 @@
-const CACHE_NAME = 'filmliographie-shell-v2';
+const CACHE_NAME = 'filmliographie-shell-v3';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -34,6 +34,15 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
+
+  // API dynamiques (bibliothèque cloud, recherche/fiche TMDB, IA) : jamais de
+  // cache. C'était le vrai bug derrière les films de démo qui revenaient
+  // sans arrêt : /api/library tombait dans la règle "assets statiques"
+  // ci-dessous et servait indéfiniment sa toute première réponse, figée,
+  // au lieu d'aller chercher l'état réel à chaque chargement.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
+    return;
+  }
 
   // Code de l'app (HTML/CSS/JS) : réseau en priorité, jamais de version périmée servie sciemment.
   // Le cache ne sert que de secours hors-ligne.
