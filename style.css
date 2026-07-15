@@ -270,6 +270,63 @@ img { display: block; max-width: 100%; }
 
 .avatar:hover { border-color: var(--accent); }
 
+.profile-avatar-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.profile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.profile-row.is-active { border-color: var(--accent); background: var(--accent-soft); }
+
+.profile-row .profile-avatar-badge { width: 30px; height: 30px; font-size: 13px; }
+
+.profile-name-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 4px 2px;
+  border-bottom: 1px solid transparent;
+}
+
+.profile-name-input:hover, .profile-name-input:focus { border-bottom-color: var(--border-strong); outline: none; }
+
+.profile-current-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.profile-switch-btn { flex-shrink: 0; }
+
 .theme-toggle-icon {
   width: 20px;
   height: 20px;
@@ -1434,6 +1491,7 @@ textarea { resize: vertical; font-family: inherit; }
   .media-toggle { grid-column: 1 / -1; order: 2; }
   .topbar-search { grid-column: 1 / -1; order: 3; }
   .topbar-actions .btn span { display: none; }
+  .topbar-actions .btn .profile-avatar-badge { display: flex; }
   .topbar-actions .btn { padding: 9px; }
 
   /* Sur mobile, tous les boutons de la topbar passent en icône seule (y

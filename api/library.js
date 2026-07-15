@@ -1,14 +1,38 @@
 // Sauvegarde cloud de la filmothèque (Vercel Blob) : le localStorage du téléphone
 // reste le cache rapide, mais ce blob est la source de vérité qui survit à un
 // nettoyage de stockage navigateur/iOS.
+// Un fichier par profil (?profile=p1|p2|p3...) pour que chaque personne ait sa
+// propre bibliothèque. Le tout premier profil (p1) hérite en lecture de
+// l'ancien fichier unique `library.json` (créé avant l'introduction des
+// profils), pour ne rien perdre lors de la migration.
 import { put, head } from '@vercel/blob';
 
-const PATHNAME = 'library.json';
+const LEGACY_PATHNAME = 'library.json';
+const LEGACY_PROFILE_ID = 'p1';
+
+function pathnameFor(profile) {
+  if (!profile) return LEGACY_PATHNAME;
+  const safe = String(profile).replace(/[^a-zA-Z0-9_-]/g, '');
+  return `library-${safe || 'default'}.json`;
+}
+
+async function headSafe(pathname) {
+  try {
+    return await head(pathname, { token: process.env.BLOB_READ_WRITE_TOKEN });
+  } catch (err) {
+    return null;
+  }
+}
 
 export default async function handler(req, res) {
+  const profile = (req.query.profile || '').toString();
+  const pathname = pathnameFor(profile);
+
   if (req.method === 'GET') {
     try {
-      const meta = await head(PATHNAME, { token: process.env.BLOB_READ_WRITE_TOKEN });
+      let meta = await headSafe(pathname);
+      if (!meta && profile === LEGACY_PROFILE_ID) meta = await headSafe(LEGACY_PATHNAME);
+      if (!meta) { res.status(200).json({ books: null }); return; }
       const fresh = await fetch(`${meta.url}?t=${Date.now()}`, { cache: 'no-store' });
       if (!fresh.ok) throw new Error('fetch blob failed');
       const data = await fresh.json();
@@ -27,7 +51,7 @@ export default async function handler(req, res) {
       return;
     }
     try {
-      await put(PATHNAME, JSON.stringify(movies), {
+      await put(pathname, JSON.stringify(movies), {
         access: 'public',
         addRandomSuffix: false,
         allowOverwrite: true,

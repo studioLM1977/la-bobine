@@ -7,8 +7,39 @@
     document.documentElement.setAttribute('data-theme', savedTheme);
   }
 
-  const STORAGE_KEY = 'la-bobine.movies';
+  const LEGACY_STORAGE_KEY = 'la-bobine.movies';
   const MEDIA_TYPE_KEY = 'la-bobine.mediaType';
+
+  // ---------- Profils (une bibliothèque distincte par personne, sans mot de passe) ----------
+  // Le thème, la bascule Films/Séries et le tri restent partagés (préférences
+  // de l'appareil) ; seule la liste des films/séries change de profil à profil.
+
+  const PROFILES = [
+    { id: 'p1', name: 'Lionel' },
+    { id: 'p2', name: 'Ma femme' },
+    { id: 'p3', name: 'Mon fils' },
+  ];
+  const PROFILE_KEY = 'la-bobine.activeProfile';
+  const PROFILE_NAMES_KEY = 'la-bobine.profileNames';
+
+  let profileNames = {};
+  try { profileNames = JSON.parse(localStorage.getItem(PROFILE_NAMES_KEY) || '{}'); } catch (e) { profileNames = {}; }
+
+  function profileStorageKey(id) { return `la-bobine.movies.${id}`; }
+
+  function getProfileName(id) {
+    if (profileNames[id]) return profileNames[id];
+    const p = PROFILES.find(p => p.id === id);
+    return p ? p.name : id;
+  }
+
+  function setProfileName(id, name) {
+    profileNames[id] = name;
+    localStorage.setItem(PROFILE_NAMES_KEY, JSON.stringify(profileNames));
+  }
+
+  let activeProfileId = localStorage.getItem(PROFILE_KEY) || PROFILES[0].id;
+  if (!PROFILES.some(p => p.id === activeProfileId)) activeProfileId = PROFILES[0].id;
 
   const STATUS_LABELS = {
     want: 'À voir',
@@ -479,20 +510,31 @@
 
   const MOCK_MOVIES = [];
 
-  function loadMovies() {
+  function loadMovies(profileId) {
+    const key = profileStorageKey(profileId);
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(key);
       if (raw) return { movies: JSON.parse(raw), wasEmpty: false };
+      // Migration : le tout premier profil hérite de l'ancienne bibliothèque
+      // unique (celle d'avant l'introduction des profils), pour ne rien perdre.
+      if (profileId === PROFILES[0].id) {
+        const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacy) {
+          localStorage.setItem(key, legacy);
+          return { movies: JSON.parse(legacy), wasEmpty: false };
+        }
+      }
     } catch (e) { /* localStorage indisponible, on retombe sur les mocks */ }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(MOCK_MOVIES));
+    localStorage.setItem(key, JSON.stringify(MOCK_MOVIES));
     return { movies: structuredClone(MOCK_MOVIES), wasEmpty: true };
   }
 
-  const initialLoad = loadMovies();
+  let STORAGE_KEY = profileStorageKey(activeProfileId);
+  const initialLoad = loadMovies(activeProfileId);
   let movies = initialLoad.movies;
   // true si le stockage du téléphone était vide au démarrage (donc rempli avec les
   // films de démo) : sert à savoir si on peut écraser sans risque avec la sauvegarde cloud.
-  const libraryWasEmpty = initialLoad.wasEmpty;
+  let libraryWasEmpty = initialLoad.wasEmpty;
   // 'movie' ou 'series' : bascule tout l'affichage (topbar), persistée entre visites.
   let activeMediaType = localStorage.getItem(MEDIA_TYPE_KEY) === 'series' ? 'series' : 'movie';
   let activeFilter = 'all';
@@ -787,6 +829,84 @@
     if (!btn) return;
     setActiveMediaType(btn.dataset.media);
   });
+
+  // ---------- Profils ----------
+
+  const profileModalOverlay = document.getElementById('profileModalOverlay');
+  const profileBtn = document.getElementById('profileBtn');
+  const profileList = document.getElementById('profileList');
+
+  function updateProfileButton() {
+    const name = getProfileName(activeProfileId);
+    document.getElementById('profileBtnAvatar').textContent = name.charAt(0).toUpperCase();
+    document.getElementById('profileBtnLabel').textContent = name;
+    profileBtn.title = `Profil : ${name}`;
+  }
+
+  function renderProfileList() {
+    profileList.innerHTML = '';
+    PROFILES.forEach(p => {
+      const name = getProfileName(p.id);
+      const isActive = p.id === activeProfileId;
+      const row = document.createElement('div');
+      row.className = 'profile-row' + (isActive ? ' is-active' : '');
+      row.innerHTML = `
+        <span class="profile-avatar-badge">${escapeHtml(name.charAt(0).toUpperCase())}</span>
+        <input type="text" class="profile-name-input" value="${escapeAttr(name)}" maxlength="24">
+        ${isActive
+          ? '<span class="profile-current-badge">Actif</span>'
+          : '<button type="button" class="btn btn-ghost profile-switch-btn">Choisir</button>'}
+      `;
+      const input = row.querySelector('.profile-name-input');
+      input.addEventListener('change', () => {
+        const newName = input.value.trim() || getProfileName(p.id);
+        input.value = newName;
+        setProfileName(p.id, newName);
+        if (isActive) updateProfileButton();
+      });
+      const switchBtn = row.querySelector('.profile-switch-btn');
+      if (switchBtn) switchBtn.addEventListener('click', () => {
+        switchProfile(p.id);
+        closeModals();
+      });
+      profileList.appendChild(row);
+    });
+  }
+
+  function switchProfile(newId) {
+    if (newId === activeProfileId) return;
+
+    // Vide la file d'attente de sync du profil qu'on quitte avant de basculer,
+    // pour ne pas perdre sa dernière modif ni l'envoyer sous le mauvais profil.
+    if (syncTimer) syncNow();
+
+    activeProfileId = newId;
+    localStorage.setItem(PROFILE_KEY, newId);
+    STORAGE_KEY = profileStorageKey(newId);
+
+    const loaded = loadMovies(newId);
+    movies = loaded.movies;
+    libraryWasEmpty = loaded.wasEmpty;
+
+    activeFilter = 'all';
+    activeGenre = 'all';
+    activeDecade = 'all';
+    searchTerm = '';
+    activeMovieId = null;
+    document.getElementById('searchInput').value = '';
+    tabsEl.querySelectorAll('.tab').forEach(t => t.classList.toggle('is-active', t.dataset.filter === 'all'));
+
+    updateProfileButton();
+    renderAll();
+    syncFromServer();
+  }
+
+  profileBtn.addEventListener('click', () => {
+    renderProfileList();
+    profileModalOverlay.classList.add('is-open');
+  });
+
+  updateProfileButton();
 
   // ---------- Étoiles (demi-étoiles au survol) ----------
 
@@ -1485,6 +1605,7 @@
       movieModalOverlay.classList.remove('is-open');
       addModalOverlay.classList.remove('is-open');
       recommendModalOverlay.classList.remove('is-open');
+      profileModalOverlay.classList.remove('is-open');
       activeMovieId = null;
     };
 
@@ -1501,7 +1622,7 @@
   }
 
   document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', closeModals));
-  [movieModalOverlay, addModalOverlay, recommendModalOverlay].forEach(overlay => {
+  [movieModalOverlay, addModalOverlay, recommendModalOverlay, profileModalOverlay].forEach(overlay => {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModals(); });
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModals(); });
@@ -1604,7 +1725,7 @@
   // Le localStorage reste le cache rapide/hors-ligne ; ce blob est la sauvegarde
   // qui survit à un nettoyage du stockage navigateur.
 
-  const SYNC_URL = '/api/library';
+  function syncUrl() { return `/api/library?profile=${encodeURIComponent(activeProfileId)}`; }
   let syncTimer = null;
   // true tant que le dernier changement local n'est pas confirmé reçu par le
   // cloud (aucune retentative auto en cas d'échec réseau auparavant : un
@@ -1635,7 +1756,7 @@
     clearTimeout(syncTimer);
     syncPending = true;
     setSyncStatus('pending');
-    fetch(SYNC_URL, {
+    fetch(syncUrl(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(movies),
@@ -1658,7 +1779,7 @@
 
   async function syncFromServer() {
     try {
-      const res = await fetch(SYNC_URL, { cache: 'no-store' });
+      const res = await fetch(syncUrl(), { cache: 'no-store' });
       const data = await res.json();
       if (!Array.isArray(data.books)) {
         queueSync(); // rien côté serveur pour l'instant : on l'initialise avec l'état local

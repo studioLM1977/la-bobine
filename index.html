@@ -61,6 +61,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         <span data-movie="Ajouter un film" data-series="Ajouter une série">Ajouter un film</span>
       </button>
+      <button class="btn btn-ghost" id="profileBtn" title="Changer de profil">
+        <span class="profile-avatar-badge" id="profileBtnAvatar"></span>
+        <span id="profileBtnLabel"></span>
+      </button>
       <button class="avatar" id="avatarBtn" aria-label="Changer l'apparence" title="Changer l'apparence">
         <svg class="theme-toggle-icon" viewBox="0 0 24 24">
           <g class="theme-toggle-rays" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
@@ -371,6 +375,18 @@
     </div>
     <button type="button" class="btn btn-primary" id="recommendSubmitBtn" data-movie="Suggérer des films" data-series="Suggérer des séries">Suggérer des films</button>
     <div class="sr-results" id="recommendResults"></div>
+  </div>
+</div>
+
+<!-- Modale profils (bibliothèque distincte par personne, sans mot de passe) -->
+<div class="modal-overlay" id="profileModalOverlay">
+  <div class="modal add-modal" role="dialog" aria-modal="true">
+    <button class="modal-close" data-close>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h3>Profils</h3>
+    <p class="recommend-intro">Chacun a sa propre bibliothèque, ses notes et son Top 10.</p>
+    <div class="profile-list" id="profileList"></div>
   </div>
 </div>
 
