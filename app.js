@@ -707,7 +707,7 @@
       card.innerHTML = `
         <div class="movie-card-cover">
           <img src="${escapeAttr(movie.poster)}" alt="" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(160deg, var(--surface-3), var(--surface-2))'; this.remove();">
-          <span class="movie-card-status" data-s="${movie.status}">${STATUS_LABELS[movie.status]}</span>
+          <span class="movie-card-status" data-s="${movie.status}">${STATUS_LABELS[movie.status] || STATUS_LABELS.want}</span>
           ${ratingHtml}
         </div>
         <p class="movie-card-title">${escapeHtml(movie.title)}</p>
