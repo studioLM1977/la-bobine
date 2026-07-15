@@ -8,12 +8,48 @@
   }
 
   const STORAGE_KEY = 'la-bobine.movies';
+  const MEDIA_TYPE_KEY = 'la-bobine.mediaType';
 
   const STATUS_LABELS = {
     want: 'À voir',
     seen: 'Vu',
     dnf: 'Abandonné',
   };
+
+  // ---------- Films vs séries ----------
+  // Un seul tableau `movies` contient les deux types, distingués par `mediaType`
+  // ('movie' par défaut si absent, pour les entrées créées avant cette fonctionnalité).
+  // Le bouton en topbar bascule `activeMediaType`, qui filtre tout l'affichage.
+
+  function isSeries(item) {
+    return (item && item.mediaType) === 'series';
+  }
+
+  function creatorLabel(item) {
+    return isSeries(item) ? 'Créateur' : 'Réalisateur';
+  }
+
+  function formatRuntimeLine(item) {
+    if (isSeries(item)) {
+      const parts = [];
+      if (item.runtime) parts.push(item.runtime + ' min/ép.');
+      if (item.seasons) parts.push(item.seasons + (item.seasons > 1 ? ' saisons' : ' saison'));
+      if (item.episodes) parts.push(item.episodes + (item.episodes > 1 ? ' épisodes' : ' épisode'));
+      if (item.year) parts.push(item.year);
+      return parts.join(' · ') || '—';
+    }
+    return item.runtime + ' min' + (item.year ? ' · ' + item.year : '');
+  }
+
+  // Applique les libellés film/série dynamiques : tout élément portant
+  // data-movie/data-series (texte) ou data-ph-movie/data-ph-series (placeholder)
+  // ou data-aria-movie/data-aria-series (aria-label) est mis à jour selon activeMediaType.
+  function applyMediaTypeLabels() {
+    const suffix = activeMediaType === 'series' ? 'series' : 'movie';
+    document.querySelectorAll(`[data-${suffix}]`).forEach(el => { el.textContent = el.dataset[suffix]; });
+    document.querySelectorAll(`[data-ph-${suffix}]`).forEach(el => { el.placeholder = el.dataset[`ph${suffix[0].toUpperCase()}${suffix.slice(1)}`]; });
+    document.querySelectorAll(`[data-aria-${suffix}]`).forEach(el => { el.setAttribute('aria-label', el.dataset[`aria${suffix[0].toUpperCase()}${suffix.slice(1)}`]); });
+  }
 
   // ---------- Utilitaires premium ----------
 
@@ -172,16 +208,18 @@
   // ---------- TMDB (affiches, réalisateur, durée, synopsis) ----------
   // La clé API reste côté serveur (fonction serverless /api/movies), jamais exposée au client.
 
-  async function searchTmdb(query, limit = 8) {
-    const url = `/api/movies?q=${encodeURIComponent(query)}&limit=${limit}`;
+  async function searchTmdb(query, limit = 8, mediaType = 'movie') {
+    const base = mediaType === 'series' ? '/api/tv' : '/api/movies';
+    const url = `${base}?q=${encodeURIComponent(query)}&limit=${limit}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('TMDB indisponible');
     const data = await res.json();
     return data.results || [];
   }
 
-  async function getMovieDetails(tmdbId, skipYoutube) {
-    const url = `/api/movies?id=${encodeURIComponent(tmdbId)}${skipYoutube ? '&skipYoutube=1' : ''}`;
+  async function getMovieDetails(tmdbId, skipYoutube, mediaType = 'movie') {
+    const base = mediaType === 'series' ? '/api/tv' : '/api/movies';
+    const url = `${base}?id=${encodeURIComponent(tmdbId)}${skipYoutube ? '&skipYoutube=1' : ''}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('TMDB indisponible');
     return res.json();
@@ -209,7 +247,8 @@
   }
 
   function renderSynopsisEmpty() {
-    document.getElementById('mmSynopsisBody').innerHTML = '<p class="synopsis-empty">Synopsis indisponible pour ce film.</p>';
+    const text = activeMediaType === 'series' ? 'Synopsis indisponible pour cette série.' : 'Synopsis indisponible pour ce film.';
+    document.getElementById('mmSynopsisBody').innerHTML = `<p class="synopsis-empty">${text}</p>`;
   }
 
   async function loadSynopsis(movie) {
@@ -217,15 +256,16 @@
     renderSynopsisLoading();
 
     try {
+      const mediaType = movie.mediaType || 'movie';
       let tmdbId = movie.tmdbId;
       if (!tmdbId) {
-        const results = await searchTmdb(`${movie.title} ${movie.director}`, 1);
+        const results = await searchTmdb(`${movie.title} ${movie.director}`, 1, mediaType);
         tmdbId = results[0] && results[0].id;
       }
       if (activeMovieId !== movieId) return;
       if (!tmdbId) { renderSynopsisEmpty(); return; }
 
-      const details = await getMovieDetails(tmdbId);
+      const details = await getMovieDetails(tmdbId, undefined, mediaType);
       if (activeMovieId !== movieId) return;
 
       movie.tmdbId = tmdbId;
@@ -328,7 +368,7 @@
     });
   });
 
-  function renderSimilar(items) {
+  function renderSimilar(items, mediaType = 'movie') {
     const block = document.getElementById('mmSimilarBlock');
     const strip = document.getElementById('mmSimilarStrip');
     if (!items || items.length === 0) { block.hidden = true; strip.innerHTML = ''; return; }
@@ -343,7 +383,7 @@
       `;
       el.addEventListener('click', () => {
         closeModals();
-        openAddModal();
+        openAddModal(mediaType);
         setAddMode('search');
         selectMovie(item);
       });
@@ -382,9 +422,10 @@
     renderWatchProviders(null);
 
     try {
+      const mediaType = movie.mediaType || 'movie';
       let tmdbId = movie.tmdbId;
       if (!tmdbId) {
-        const results = await searchTmdb(`${movie.title} ${movie.director}`, 1);
+        const results = await searchTmdb(`${movie.title} ${movie.director}`, 1, mediaType);
         tmdbId = results[0] && results[0].id;
       }
       if (activeMovieId !== movieId || !tmdbId) return;
@@ -394,12 +435,12 @@
       // limité à 100 requêtes/jour, inutile de la redemander à chaque
       // réouverture de la fiche.
       const trailerAlreadyResolved = movie.trailerResolved === true;
-      const details = await getMovieDetails(tmdbId, trailerAlreadyResolved);
+      const details = await getMovieDetails(tmdbId, trailerAlreadyResolved, mediaType);
       if (activeMovieId !== movieId) return;
 
       renderGenres(details.genres);
       renderCast(details.cast);
-      renderSimilar(details.similar);
+      renderSimilar(details.similar, mediaType);
       renderWatchProviders(details.watchProviders);
 
       if (trailerAlreadyResolved) {
@@ -416,6 +457,12 @@
       if (!movie.genres && details.genres && details.genres.length) {
         movie.genres = details.genres;
         saveMovies();
+      }
+      if (mediaType === 'series') {
+        let changed = false;
+        if (!movie.seasons && details.seasons) { movie.seasons = details.seasons; changed = true; }
+        if (!movie.episodes && details.episodes) { movie.episodes = details.episodes; changed = true; }
+        if (changed) saveMovies();
       }
     } catch (err) { /* infos secondaires : on laisse les blocs masqués */ }
   }
@@ -436,6 +483,8 @@
   // true si le stockage du téléphone était vide au démarrage (donc rempli avec les
   // films de démo) : sert à savoir si on peut écraser sans risque avec la sauvegarde cloud.
   const libraryWasEmpty = initialLoad.wasEmpty;
+  // 'movie' ou 'series' : bascule tout l'affichage (topbar), persistée entre visites.
+  let activeMediaType = localStorage.getItem(MEDIA_TYPE_KEY) === 'series' ? 'series' : 'movie';
   let activeFilter = 'all';
   let activeGenre = 'all';
   let activeDecade = 'all';
@@ -460,6 +509,12 @@
   const emptyState = document.getElementById('emptyState');
   const tabsEl = document.getElementById('tabs');
 
+  // Sous-ensemble du type actif (film ou série) : toutes les fonctions de rendu
+  // partent de là, le reste des filtres (statut, genre, décennie, recherche) s'applique dessus.
+  function currentLibrary() {
+    return movies.filter(m => (m.mediaType || 'movie') === activeMediaType);
+  }
+
   function renderAll() {
     renderTopMovies();
     renderTabCounts();
@@ -470,7 +525,7 @@
   function renderTopMovies() {
     const topSection = document.getElementById('topSection');
     const topStrip = document.getElementById('topStrip');
-    const rated = movies.filter(m => m.rating > 0);
+    const rated = currentLibrary().filter(m => m.rating > 0);
 
     if (rated.length === 0) {
       topSection.hidden = true;
@@ -500,8 +555,9 @@
   }
 
   function renderTabCounts() {
-    const counts = { all: movies.length, want: 0, seen: 0, dnf: 0 };
-    movies.forEach(m => { counts[m.status] = (counts[m.status] || 0) + 1; });
+    const lib = currentLibrary();
+    const counts = { all: lib.length, want: 0, seen: 0, dnf: 0 };
+    lib.forEach(m => { counts[m.status] = (counts[m.status] || 0) + 1; });
     tabsEl.querySelectorAll('.tab').forEach(tab => {
       const f = tab.dataset.filter;
       const span = tab.querySelector('span');
@@ -517,7 +573,7 @@
   function renderFilters() {
     const genreSet = new Set();
     const decadeSet = new Set();
-    movies.forEach(m => {
+    currentLibrary().forEach(m => {
       (m.genres || []).forEach(g => genreSet.add(g));
       if (m.year) decadeSet.add(Math.floor(m.year / 10) * 10);
     });
@@ -560,7 +616,8 @@
   });
 
   function renderGrid() {
-    let list = activeFilter === 'all' ? movies : movies.filter(m => m.status === activeFilter);
+    const lib = currentLibrary();
+    let list = activeFilter === 'all' ? lib : lib.filter(m => m.status === activeFilter);
     if (activeGenre !== 'all') list = list.filter(m => (m.genres || []).includes(activeGenre));
     if (activeDecade !== 'all') list = list.filter(m => m.year && Math.floor(m.year / 10) * 10 === activeDecade);
     if (searchTerm) {
@@ -696,6 +753,31 @@
     renderGrid();
   });
 
+  // ---------- Bascule Films / Séries ----------
+
+  const mediaToggle = document.getElementById('mediaToggle');
+
+  function setActiveMediaType(type) {
+    if (type === activeMediaType) return;
+    activeMediaType = type;
+    localStorage.setItem(MEDIA_TYPE_KEY, type);
+    mediaToggle.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('is-active', b.dataset.media === type));
+    activeFilter = 'all';
+    tabsEl.querySelectorAll('.tab').forEach(t => t.classList.toggle('is-active', t.dataset.filter === 'all'));
+    activeGenre = 'all';
+    activeDecade = 'all';
+    searchTerm = '';
+    document.getElementById('searchInput').value = '';
+    applyMediaTypeLabels();
+    renderAll();
+  }
+
+  mediaToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('.mode-tab');
+    if (!btn) return;
+    setActiveMediaType(btn.dataset.media);
+  });
+
   // ---------- Étoiles (demi-étoiles au survol) ----------
 
   function setupStarWidget(container, fillEl, onChange) {
@@ -775,11 +857,13 @@
       activeMovieId = id;
 
       mmPoster.src = movie.poster;
-      document.getElementById('mmDirector').value = movie.director;
+      const mmDirectorInput = document.getElementById('mmDirector');
+      mmDirectorInput.value = movie.director;
+      mmDirectorInput.placeholder = creatorLabel(movie);
       document.getElementById('mmTitle').value = movie.title;
       mmPosterUrl.value = movie.poster;
       mmPosterUrlBlock.hidden = true;
-      document.getElementById('mmRuntime').textContent = movie.runtime + ' min' + (movie.year ? ' · ' + movie.year : '');
+      document.getElementById('mmRuntime').textContent = formatRuntimeLine(movie);
       document.getElementById('mmNotes').value = movie.notes || '';
 
       mmSelectedStatus = movie.status;
@@ -874,7 +958,7 @@
       const rect = btn.getBoundingClientRect();
       confettiBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
       haptic([20, 40, 30]);
-      showToast('Film terminé — bravo !', 'celebrate');
+      showToast(isSeries(movie) ? 'Série terminée — bravo !' : 'Film terminé — bravo !', 'celebrate');
     } else if (mmSelectedStatus === 'dnf' && movie.status === 'dnf') {
       haptic(15);
     }
@@ -897,6 +981,7 @@
   const describeModeBlock = document.getElementById('describeModeBlock');
   const manualFieldsBlock = document.getElementById('manualFieldsBlock');
   const runtimeBlock = document.getElementById('runtimeBlock');
+  const afSeriesFieldsBlock = document.getElementById('afSeriesFieldsBlock');
   const srQuery = document.getElementById('srQuery');
   const srResults = document.getElementById('srResults');
   const srSelected = document.getElementById('srSelected');
@@ -904,6 +989,9 @@
 
   let afSelectedStatus = 'want';
   let addMode = 'search';
+  // Type du média en cours d'ajout dans cette modale : fixé à l'ouverture (mode actif de
+  // la page par défaut), utilisé pour choisir l'endpoint TMDB (/api/movies ou /api/tv).
+  let addMediaType = 'movie';
   let selectedMovie = null;
   let srAbortController = null;
   let srDebounceTimer = null;
@@ -930,7 +1018,7 @@
 
   function setAddMode(mode) {
     addMode = mode;
-    document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('is-active', t.dataset.mode === mode));
+    document.querySelectorAll('#modeTabs .mode-tab').forEach(t => t.classList.toggle('is-active', t.dataset.mode === mode));
     searchModeBlock.hidden = mode !== 'search';
     describeModeBlock.hidden = mode !== 'describe';
     manualFieldsBlock.hidden = mode !== 'manual';
@@ -940,12 +1028,14 @@
       afRuntimeInput.required = true;
       document.getElementById('afTitle').required = true;
       document.getElementById('afDirector').required = true;
+      afSeriesFieldsBlock.hidden = addMediaType !== 'series';
       updateSubmitState();
     } else {
       document.getElementById('afTitle').required = false;
       document.getElementById('afDirector').required = false;
       runtimeBlock.hidden = !selectedMovie;
       afRuntimeInput.required = false;
+      afSeriesFieldsBlock.hidden = true;
       updateSubmitState();
     }
   }
@@ -979,7 +1069,7 @@
     renderSrSkeleton();
 
     try {
-      const results = await searchTmdb(query, 8);
+      const results = await searchTmdb(query, 8, addMediaType);
       renderTmdbResults(results);
     } catch (err) {
       srResults.innerHTML = '<p class="sr-error">Recherche indisponible pour le moment. Essayez la saisie manuelle.</p>';
@@ -1032,11 +1122,13 @@
       genres: [],
       tmdbId: item.id,
       synopsis: item.overview ? truncateSynopsis(item.overview) : null,
+      seasons: null,
+      episodes: null,
     };
     applySelectedMovie();
 
     try {
-      const details = await getMovieDetails(item.id);
+      const details = await getMovieDetails(item.id, undefined, addMediaType);
       if (!selectedMovie || selectedMovie.tmdbId !== item.id) return; // sélection changée entre-temps
       selectedMovie.director = details.director || '';
       selectedMovie.runtime = details.runtime || 0;
@@ -1044,6 +1136,10 @@
       if (details.genres) selectedMovie.genres = details.genres;
       if (details.poster) selectedMovie.poster = details.poster;
       if (details.overview) selectedMovie.synopsis = truncateSynopsis(details.overview);
+      if (addMediaType === 'series') {
+        selectedMovie.seasons = details.seasons || null;
+        selectedMovie.episodes = details.episodes || null;
+      }
       applySelectedMovie();
     } catch (err) { /* on garde les infos partielles issues de la recherche */ }
   }
@@ -1138,7 +1234,7 @@
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'identify', description }),
+        body: JSON.stringify({ action: 'identify', description, mediaType: addMediaType }),
       });
       if (!res.ok) throw new Error('IA indisponible');
       const data = await res.json();
@@ -1173,7 +1269,7 @@
 
   function renderRecommendGenres() {
     const genreSet = new Set();
-    movies.filter(m => m.rating > 0).forEach(m => (m.genres || []).forEach(g => genreSet.add(g)));
+    currentLibrary().filter(m => m.rating > 0).forEach(m => (m.genres || []).forEach(g => genreSet.add(g)));
 
     if (genreSet.size === 0) {
       recommendGenreRow.hidden = true;
@@ -1198,16 +1294,17 @@
     recommendStyleInput.value = '';
     renderRecommendGenres();
 
-    const rated = movies.filter(m => m.rating > 0);
-    recommendResults.innerHTML = rated.length === 0
-      ? '<p class="sr-empty">Notez au moins un film pour obtenir des suggestions.</p>'
-      : '';
+    const rated = currentLibrary().filter(m => m.rating > 0);
+    const emptyMsg = activeMediaType === 'series'
+      ? 'Notez au moins une série pour obtenir des suggestions.'
+      : 'Notez au moins un film pour obtenir des suggestions.';
+    recommendResults.innerHTML = rated.length === 0 ? `<p class="sr-empty">${emptyMsg}</p>` : '';
 
     recommendModalOverlay.classList.add('is-open');
   });
 
   recommendSubmitBtn.addEventListener('click', async () => {
-    const rated = movies.filter(m => m.rating > 0);
+    const rated = currentLibrary().filter(m => m.rating > 0);
     if (rated.length === 0 || recommendSubmitBtn.disabled) return;
 
     recommendSubmitBtn.disabled = true;
@@ -1220,6 +1317,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'recommend',
+          mediaType: activeMediaType,
           movies: rated.map(m => ({ title: m.title, director: m.director, genres: m.genres || [], rating: m.rating })),
           genre: recommendGenre === 'all' ? '' : recommendGenre,
           style: recommendStyleInput.value.trim(),
@@ -1235,7 +1333,7 @@
       } else {
         items.forEach(item => renderCandidateRow(recommendResults, item, (picked) => {
           recommendModalOverlay.classList.remove('is-open');
-          openAddModal();
+          openAddModal(activeMediaType);
           setAddMode('search');
           selectMovie(picked);
         }, item.reason || ''));
@@ -1248,7 +1346,8 @@
     }
   });
 
-  function openAddModal() {
+  function openAddModal(mediaType = activeMediaType) {
+    addMediaType = mediaType;
     addForm.reset();
     afSelectedStatus = 'want';
     updateStatusChips(afStatusChips, afSelectedStatus);
@@ -1264,10 +1363,10 @@
     setTimeout(() => srQuery.focus(), 150);
   }
 
-  document.getElementById('openAddBtn').addEventListener('click', openAddModal);
-  document.getElementById('emptyStateAddBtn').addEventListener('click', openAddModal);
+  document.getElementById('openAddBtn').addEventListener('click', () => openAddModal());
+  document.getElementById('emptyStateAddBtn').addEventListener('click', () => openAddModal());
   const fabAddBtn = document.getElementById('fabAddBtn');
-  fabAddBtn.addEventListener('click', openAddModal);
+  fabAddBtn.addEventListener('click', () => openAddModal());
 
   // Bonus : FAB magnétique (attire le curseur sur desktop).
   if (!prefersReducedMotion && window.matchMedia('(pointer: fine)').matches) {
@@ -1293,7 +1392,7 @@
   addForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    let title, director, poster, runtime, year, genres, tmdbId, synopsis;
+    let title, director, poster, runtime, year, genres, tmdbId, synopsis, seasons, episodes;
 
     if (addMode === 'search') {
       if (!selectedMovie) return;
@@ -1305,6 +1404,8 @@
       genres = selectedMovie.genres || [];
       tmdbId = selectedMovie.tmdbId || null;
       synopsis = selectedMovie.synopsis || null;
+      seasons = selectedMovie.seasons || null;
+      episodes = selectedMovie.episodes || null;
     } else {
       title = document.getElementById('afTitle').value.trim();
       director = document.getElementById('afDirector').value.trim();
@@ -1314,11 +1415,14 @@
       genres = [];
       tmdbId = null;
       synopsis = null;
+      seasons = addMediaType === 'series' ? (parseInt(document.getElementById('afSeasons').value, 10) || null) : null;
+      episodes = addMediaType === 'series' ? (parseInt(document.getElementById('afEpisodes').value, 10) || null) : null;
       if (!title || !director) return;
     }
 
     movies.unshift({
       id: uid(),
+      mediaType: addMediaType,
       title,
       director,
       runtime,
@@ -1330,6 +1434,8 @@
       poster: poster || fallbackCover(title),
       tmdbId,
       synopsis,
+      seasons,
+      episodes,
     });
 
     saveMovies();
@@ -1409,15 +1515,17 @@
     try {
       if (!Array.isArray(incoming)) return;
 
-      const existingKeys = new Set(movies.map(m => normKey(m.title) + '|' + normKey(m.director)));
+      const dedupKey = (title, director, mediaType) => normKey(title) + '|' + normKey(director) + '|' + (mediaType === 'series' ? 'series' : 'movie');
+      const existingKeys = new Set(movies.map(m => dedupKey(m.title, m.director, m.mediaType)));
       let added = 0;
       let updated = 0;
 
       incoming.forEach(item => {
+        const mediaType = item.mediaType === 'series' ? 'series' : 'movie';
         const matchTitle = item.matchTitle !== undefined ? item.matchTitle : item.title;
         const matchDirector = item.matchDirector !== undefined ? item.matchDirector : item.director;
-        const matchKey = normKey(matchTitle) + '|' + normKey(matchDirector);
-        const existing = movies.find(m => (normKey(m.title) + '|' + normKey(m.director)) === matchKey);
+        const matchKey = dedupKey(matchTitle, matchDirector, mediaType);
+        const existing = movies.find(m => dedupKey(m.title, m.director, m.mediaType) === matchKey);
 
         if (existing) {
           let changed = false;
@@ -1428,16 +1536,19 @@
           if (item.year) { existing.year = item.year; changed = true; }
           if (item.genres) { existing.genres = item.genres; changed = true; }
           if (item.tmdbId) { existing.tmdbId = item.tmdbId; changed = true; }
+          if (item.seasons) { existing.seasons = item.seasons; changed = true; }
+          if (item.episodes) { existing.episodes = item.episodes; changed = true; }
           if (changed) updated++;
           return;
         }
 
-        const newKey = normKey(item.title) + '|' + normKey(item.director);
+        const newKey = dedupKey(item.title, item.director, mediaType);
         if (existingKeys.has(newKey)) return;
         existingKeys.add(newKey);
 
         movies.unshift({
           id: uid(),
+          mediaType,
           title: item.title,
           director: item.director,
           runtime: item.runtime || 0,
@@ -1449,6 +1560,8 @@
           poster: item.poster || fallbackCover(item.title),
           tmdbId: item.tmdbId || null,
           synopsis: null,
+          seasons: item.seasons || null,
+          episodes: item.episodes || null,
         });
         added++;
       });
@@ -1505,7 +1618,7 @@
         movies = data.books;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
         renderAll();
-        showToast('Filmothèque restaurée depuis la sauvegarde en ligne');
+        showToast('Bibliothèque restaurée depuis la sauvegarde en ligne');
         return;
       }
       applyImport(data.books, { silent: true });
@@ -1562,14 +1675,19 @@
       const movie = targets[i];
       improvePostersBtn.querySelector('span').textContent = `Vérification ${i + 1}/${targets.length}…`;
       try {
-        const results = await searchTmdb(`${movie.title} ${movie.director}`, 1);
+        const mediaType = movie.mediaType || 'movie';
+        const results = await searchTmdb(`${movie.title} ${movie.director}`, 1, mediaType);
         const match = results[0];
         if (match) {
-          const details = await getMovieDetails(match.id);
+          const details = await getMovieDetails(match.id, undefined, mediaType);
           if (details.poster) movie.poster = details.poster;
           if (details.runtime) movie.runtime = details.runtime;
           if (details.director) movie.director = details.director;
           if (details.year) movie.year = details.year;
+          if (mediaType === 'series') {
+            if (details.seasons) movie.seasons = details.seasons;
+            if (details.episodes) movie.episodes = details.episodes;
+          }
           movie.tmdbId = match.id;
           if (details.overview && !movie.synopsis) movie.synopsis = truncateSynopsis(details.overview);
           improved++;
@@ -1617,6 +1735,8 @@
 
   // ---------- Init ----------
 
+  mediaToggle.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('is-active', b.dataset.media === activeMediaType));
+  applyMediaTypeLabels();
   renderAll();
   importFromUrl();
   syncFromServer();

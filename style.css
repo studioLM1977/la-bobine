@@ -172,7 +172,7 @@ img { display: block; max-width: 100%; }
 
 .topbar {
   display: grid;
-  grid-template-columns: auto minmax(0, 420px) auto;
+  grid-template-columns: auto auto minmax(0, 420px) auto;
   align-items: center;
   gap: 24px;
   justify-content: space-between;
@@ -181,6 +181,16 @@ img { display: block; max-width: 100%; }
   top: 0;
   z-index: 20;
   background: linear-gradient(var(--bg) 70%, transparent);
+}
+
+.media-toggle {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.media-toggle .mode-tab {
+  padding: 8px 16px;
+  white-space: nowrap;
 }
 
 .brand {
@@ -1369,6 +1379,7 @@ textarea { resize: vertical; font-family: inherit; }
     row-gap: 14px;
   }
 
+  .media-toggle { grid-column: 1 / -1; order: 2; }
   .topbar-search { grid-column: 1 / -1; order: 3; }
   .topbar-actions .btn span { display: none; }
   .topbar-actions .btn { padding: 9px; }

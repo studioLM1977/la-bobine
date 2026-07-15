@@ -35,12 +35,17 @@
       <span>FILM<span class="brand-highlight">LIO</span>GRAPHIE</span>
     </div>
 
+    <div class="mode-tabs media-toggle" id="mediaToggle">
+      <button type="button" class="mode-tab is-active" data-media="movie">Films</button>
+      <button type="button" class="mode-tab" data-media="series">Séries</button>
+    </div>
+
     <div class="topbar-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="7"/>
         <path d="m20 20-3.5-3.5"/>
       </svg>
-      <input type="text" id="searchInput" placeholder="Rechercher un titre, un réalisateur…" autocomplete="off">
+      <input type="text" id="searchInput" placeholder="Rechercher un titre, un réalisateur…" autocomplete="off" data-ph-movie="Rechercher un titre, un réalisateur…" data-ph-series="Rechercher un titre, un créateur…">
     </div>
 
     <div class="topbar-actions">
@@ -48,13 +53,13 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg>
         <span>Affiches</span>
       </button>
-      <button class="btn btn-ghost" id="recommendBtn" title="Suggestions basées sur vos films notés">
+      <button class="btn btn-ghost" id="recommendBtn" title="Suggestions basées sur vos notes">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>
         <span>Suggestions IA</span>
       </button>
       <button class="btn btn-primary" id="openAddBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        <span>Ajouter un film</span>
+        <span data-movie="Ajouter un film" data-series="Ajouter une série">Ajouter un film</span>
       </button>
       <button class="avatar" id="avatarBtn" aria-label="Changer l'apparence" title="Changer l'apparence">
         <svg class="theme-toggle-icon" viewBox="0 0 24 24">
@@ -72,14 +77,14 @@
 
     <section class="section" id="topSection" hidden>
       <div class="section-head">
-        <h2>Mes 10 meilleurs films</h2>
+        <h2 data-movie="Mes 10 meilleurs films" data-series="Mes 10 meilleures séries">Mes 10 meilleurs films</h2>
       </div>
       <div class="top-strip" id="topStrip"></div>
     </section>
 
     <section class="section">
       <div class="section-head">
-        <h2>Ma filmothèque</h2>
+        <h2 data-movie="Ma filmothèque" data-series="Mes séries">Ma filmothèque</h2>
         <div class="library-controls">
           <div class="tabs" id="tabs">
             <button class="tab is-active" data-filter="all">Tous <span>0</span></button>
@@ -92,7 +97,7 @@
             <select id="sortSelect">
               <option value="recent">Ajout récent</option>
               <option value="title">Titre (A→Z)</option>
-              <option value="director">Réalisateur (A→Z)</option>
+              <option value="director" data-movie="Réalisateur (A→Z)" data-series="Créateur (A→Z)">Réalisateur (A→Z)</option>
               <option value="rating">Meilleures notes</option>
               <option value="year" selected>Date de sortie</option>
             </select>
@@ -110,17 +115,17 @@
           <circle cx="14.5" cy="11" r="0.75" fill="currentColor" stroke="none"/>
           <path d="M9 15c.7.7 1.8 1 3 1s2.3-.3 3-1"/>
         </svg>
-        <p>Aucun film ici pour le moment.</p>
+        <p data-movie="Aucun film ici pour le moment." data-series="Aucune série ici pour le moment.">Aucun film ici pour le moment.</p>
         <button type="button" class="btn btn-primary" id="emptyStateAddBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          <span>Ajouter mon premier film</span>
+          <span data-movie="Ajouter mon premier film" data-series="Ajouter ma première série">Ajouter mon premier film</span>
         </button>
       </div>
     </section>
 
   </main>
 
-  <button class="fab" id="fabAddBtn" aria-label="Ajouter un film">
+  <button class="fab" id="fabAddBtn" aria-label="Ajouter un film" data-aria-movie="Ajouter un film" data-aria-series="Ajouter une série">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
   </button>
 
@@ -140,7 +145,7 @@
         </button>
       </div>
       <div class="movie-modal-info">
-        <input type="text" class="inline-input director-input" id="mmDirector" placeholder="Réalisateur">
+        <input type="text" class="inline-input director-input" id="mmDirector" placeholder="Réalisateur" data-ph-movie="Réalisateur" data-ph-series="Créateur">
         <input type="text" class="inline-input title-input" id="mmTitle" placeholder="Titre">
         <div class="field-block poster-url-block" id="mmPosterUrlBlock" hidden>
           <label for="mmPosterUrl">URL de l'affiche</label>
@@ -203,11 +208,11 @@
 
         <div class="field-block">
           <label for="mmNotes">Notes personnelles</label>
-          <textarea id="mmNotes" rows="4" placeholder="Vos impressions sur ce film…"></textarea>
+          <textarea id="mmNotes" rows="4" placeholder="Vos impressions sur ce film…" data-ph-movie="Vos impressions sur ce film…" data-ph-series="Vos impressions sur cette série…"></textarea>
         </div>
 
         <div class="field-block similar-block" id="mmSimilarBlock" hidden>
-          <label>Films similaires</label>
+          <label data-movie="Films similaires" data-series="Séries similaires">Films similaires</label>
           <div class="similar-strip" id="mmSimilarStrip"></div>
         </div>
 
@@ -226,7 +231,7 @@
     <button class="modal-close" data-close>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
-    <h3>Ajouter un film</h3>
+    <h3 id="addModalTitle" data-movie="Ajouter un film" data-series="Ajouter une série">Ajouter un film</h3>
 
     <div class="mode-tabs" id="modeTabs">
       <button type="button" class="mode-tab is-active" data-mode="search">Rechercher</button>
@@ -239,7 +244,7 @@
       <div id="searchModeBlock">
         <div class="sr-search-field">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input type="text" id="srQuery" placeholder="Titre, réalisateur…" autocomplete="off">
+          <input type="text" id="srQuery" placeholder="Titre, réalisateur…" autocomplete="off" data-ph-movie="Titre, réalisateur…" data-ph-series="Titre, créateur…">
         </div>
         <div class="sr-results" id="srResults"></div>
 
@@ -248,16 +253,16 @@
           <div class="sr-selected-info">
             <p class="sr-selected-director" id="srSelDirector"></p>
             <p class="sr-selected-title" id="srSelTitle"></p>
-            <button type="button" class="link-btn" id="srChangeBtn">‹ Choisir un autre film</button>
+            <button type="button" class="link-btn" id="srChangeBtn"><span data-movie="‹ Choisir un autre film" data-series="‹ Choisir une autre série">‹ Choisir un autre film</span></button>
           </div>
         </div>
       </div>
 
       <div id="describeModeBlock" hidden>
         <div class="field-block">
-          <label for="describeInput">Décrivez le film (intrigue, acteur, scène culte…)</label>
+          <label for="describeInput" id="describeInputLabel" data-movie="Décrivez le film (intrigue, acteur, scène culte…)" data-series="Décrivez la série (intrigue, acteur, scène culte…)">Décrivez le film (intrigue, acteur, scène culte…)</label>
           <div class="textarea-with-mic">
-            <textarea id="describeInput" rows="3" placeholder="Ex. le film où un type revit la même journée en boucle, avec Bill Murray"></textarea>
+            <textarea id="describeInput" rows="3" placeholder="Ex. le film où un type revit la même journée en boucle, avec Bill Murray" data-ph-movie="Ex. le film où un type revit la même journée en boucle, avec Bill Murray" data-ph-series="Ex. la série où des types fabriquent de la drogue dans un camping-car, avec Bryan Cranston"></textarea>
             <button type="button" class="mic-btn" id="describeMicBtn" aria-label="Dicter" hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><path d="M12 18v3M9 21h6"/></svg>
             </button>
@@ -265,7 +270,7 @@
         </div>
         <button type="button" class="btn btn-ghost" id="describeSubmitBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>
-          <span>Identifier le film</span>
+          <span data-movie="Identifier le film" data-series="Identifier la série">Identifier le film</span>
         </button>
         <div class="sr-results" id="describeResults"></div>
       </div>
@@ -273,24 +278,34 @@
       <div id="manualFieldsBlock" hidden>
         <div class="field-block">
           <label for="afTitle">Titre</label>
-          <input type="text" id="afTitle" placeholder="Ex. Inception">
+          <input type="text" id="afTitle" placeholder="Ex. Inception" data-ph-movie="Ex. Inception" data-ph-series="Ex. Breaking Bad">
         </div>
         <div class="field-block">
-          <label for="afDirector">Réalisateur</label>
-          <input type="text" id="afDirector" placeholder="Ex. Christopher Nolan">
+          <label for="afDirector" data-movie="Réalisateur" data-series="Créateur">Réalisateur</label>
+          <input type="text" id="afDirector" placeholder="Ex. Christopher Nolan" data-ph-movie="Ex. Christopher Nolan" data-ph-series="Ex. Vince Gilligan">
         </div>
         <div class="field-block">
           <label for="afPoster">URL de l'affiche</label>
           <input type="url" id="afPoster" placeholder="https://…">
         </div>
         <div class="field-block">
-          <label for="afYear">Année de sortie (optionnel)</label>
+          <label for="afYear">Année (optionnel)</label>
           <input type="number" id="afYear" min="1888" max="2100" placeholder="2010">
+        </div>
+        <div id="afSeriesFieldsBlock" hidden>
+          <div class="field-block">
+            <label for="afSeasons">Nombre de saisons (optionnel)</label>
+            <input type="number" id="afSeasons" min="1" placeholder="5">
+          </div>
+          <div class="field-block">
+            <label for="afEpisodes">Nombre d'épisodes (optionnel)</label>
+            <input type="number" id="afEpisodes" min="1" placeholder="62">
+          </div>
         </div>
       </div>
 
       <div class="field-block" id="runtimeBlock" hidden>
-        <label for="afRuntime">Durée (minutes)</label>
+        <label for="afRuntime" id="afRuntimeLabel" data-movie="Durée (minutes)" data-series="Durée moyenne d'un épisode (minutes)">Durée (minutes)</label>
         <input type="number" id="afRuntime" min="1" placeholder="148">
       </div>
 
@@ -325,7 +340,7 @@
       </div>
 
       <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" id="addSubmitBtn" disabled>Ajouter à ma filmothèque</button>
+        <button type="submit" class="btn btn-primary" id="addSubmitBtn" disabled data-movie="Ajouter à ma filmothèque" data-series="Ajouter à mes séries">Ajouter à ma filmothèque</button>
       </div>
     </form>
   </div>
@@ -338,13 +353,13 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
     <h3>Suggestions IA</h3>
-    <p class="recommend-intro">Quel style de film te ferait plaisir aujourd'hui ?</p>
+    <p class="recommend-intro" id="recommendIntro" data-movie="Quel style de film te ferait plaisir aujourd'hui ?" data-series="Quel style de série te ferait plaisir aujourd'hui ?">Quel style de film te ferait plaisir aujourd'hui ?</p>
     <div class="filter-row" id="recommendGenreRow"></div>
     <div class="field-block">
       <label for="recommendStyleInput">Précise l'ambiance (optionnel)</label>
       <input type="text" id="recommendStyleInput" placeholder="Ex. léger, haletant, qui fait peur, feel-good…">
     </div>
-    <button type="button" class="btn btn-primary" id="recommendSubmitBtn">Suggérer des films</button>
+    <button type="button" class="btn btn-primary" id="recommendSubmitBtn" data-movie="Suggérer des films" data-series="Suggérer des séries">Suggérer des films</button>
     <div class="sr-results" id="recommendResults"></div>
   </div>
 </div>

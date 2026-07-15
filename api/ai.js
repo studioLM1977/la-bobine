@@ -16,18 +16,20 @@ export default async function handler(req, res) {
     return;
   }
 
-  async function tmdbSearchFirst(title) {
+  async function tmdbSearchFirst(title, mediaType) {
     if (!tmdbKey || !title) return null;
+    const isSeries = mediaType === 'series';
     try {
-      const url = `https://api.themoviedb.org/3/search/movie?api_key=${tmdbKey}&language=fr-FR&include_adult=false&query=${encodeURIComponent(title)}`;
+      const endpoint = isSeries ? 'tv' : 'movie';
+      const url = `https://api.themoviedb.org/3/search/${endpoint}?api_key=${tmdbKey}&language=fr-FR&include_adult=false&query=${encodeURIComponent(title)}`;
       const r = await fetch(url);
       const data = await r.json();
       const m = (data.results || [])[0];
       if (!m) return null;
       return {
         id: m.id,
-        title: m.title,
-        year: (m.release_date || '').slice(0, 4),
+        title: isSeries ? m.name : m.title,
+        year: ((isSeries ? m.first_air_date : m.release_date) || '').slice(0, 4),
         poster: m.poster_path ? `https://image.tmdb.org/t/p/w342${m.poster_path}` : '',
         overview: m.overview || '',
       };
@@ -65,19 +67,26 @@ export default async function handler(req, res) {
 
   try {
     if (action === 'recommend') {
+      const mediaType = req.body.mediaType === 'series' ? 'series' : 'movie';
+      const isSeries = mediaType === 'series';
       const rated = (req.body.movies || []).filter((m) => m && m.rating > 0);
       if (rated.length === 0) {
-        res.status(400).json({ error: 'Aucun film noté pour baser une recommandation' });
+        res.status(400).json({ error: isSeries ? 'Aucune série notée pour baser une recommandation' : 'Aucun film noté pour baser une recommandation' });
         return;
       }
       const genre = ((req.body.genre || '').toString().trim());
       const style = ((req.body.style || '').toString().trim());
 
-      let system = 'Tu es un expert cinéma. On te donne les films notés par un utilisateur '
-        + '(titre, réalisateur, genres, note sur 5). Propose 6 films QU\'IL N\'A PAS DANS CETTE LISTE '
-        + 'et qu\'il pourrait aimer, en te basant sur ses goûts (genres et réalisateurs récurrents '
-        + 'parmi ses mieux notés).';
-      if (genre) system += ` Il veut cette fois précisément un film du genre "${genre}" : respecte ce choix en priorité.`;
+      let system = isSeries
+        ? 'Tu es un expert séries TV. On te donne les séries notées par un utilisateur '
+          + '(titre, créateur, genres, note sur 5). Propose 6 séries QU\'IL N\'A PAS DANS CETTE LISTE '
+          + 'et qu\'il pourrait aimer, en te basant sur ses goûts (genres et créateurs récurrents '
+          + 'parmi ses mieux notées).'
+        : 'Tu es un expert cinéma. On te donne les films notés par un utilisateur '
+          + '(titre, réalisateur, genres, note sur 5). Propose 6 films QU\'IL N\'A PAS DANS CETTE LISTE '
+          + 'et qu\'il pourrait aimer, en te basant sur ses goûts (genres et réalisateurs récurrents '
+          + 'parmi ses mieux notés).';
+      if (genre) system += ` Il veut cette fois précisément ${isSeries ? 'une série' : 'un film'} du genre "${genre}" : respecte ce choix en priorité.`;
       if (style) system += ` Ambiance recherchée : "${style}".`;
       system += ' Réponds uniquement en JSON strictement de la forme '
         + '{"suggestions":[{"title":"...","reason":"phrase courte en français expliquant pourquoi"}]}.';
@@ -89,7 +98,7 @@ export default async function handler(req, res) {
       const parsed = await askGemini(system, user);
       const suggestions = (parsed.suggestions || []).slice(0, 8);
       const withPosters = await Promise.all(suggestions.map(async (s) => {
-        const match = await tmdbSearchFirst(s.title);
+        const match = await tmdbSearchFirst(s.title, mediaType);
         return match ? { ...match, reason: s.reason || '' } : null;
       }));
 
@@ -98,19 +107,26 @@ export default async function handler(req, res) {
     }
 
     if (action === 'identify') {
+      const mediaType = req.body.mediaType === 'series' ? 'series' : 'movie';
+      const isSeries = mediaType === 'series';
       const description = ((req.body && req.body.description) || '').toString().trim();
       if (!description) {
         res.status(400).json({ error: 'Description manquante' });
         return;
       }
-      const system = 'Tu es un expert cinéma qui aide à retrouver le titre d\'un film à partir '
-        + 'd\'une description floue (intrigue, acteur, scène, ambiance), en français. Propose '
-        + 'jusqu\'à 5 films candidats, du plus probable au moins probable. Réponds uniquement en '
-        + 'JSON strictement de la forme {"titles":["Titre 1","Titre 2"]}.';
+      const system = isSeries
+        ? 'Tu es un expert séries TV qui aide à retrouver le titre d\'une série à partir '
+          + 'd\'une description floue (intrigue, acteur, scène, ambiance), en français. Propose '
+          + 'jusqu\'à 5 séries candidates, du plus probable au moins probable. Réponds uniquement en '
+          + 'JSON strictement de la forme {"titles":["Titre 1","Titre 2"]}.'
+        : 'Tu es un expert cinéma qui aide à retrouver le titre d\'un film à partir '
+          + 'd\'une description floue (intrigue, acteur, scène, ambiance), en français. Propose '
+          + 'jusqu\'à 5 films candidats, du plus probable au moins probable. Réponds uniquement en '
+          + 'JSON strictement de la forme {"titles":["Titre 1","Titre 2"]}.';
 
       const parsed = await askGemini(system, description);
       const titles = (parsed.titles || []).slice(0, 5);
-      const results = await Promise.all(titles.map((t) => tmdbSearchFirst(t)));
+      const results = await Promise.all(titles.map((t) => tmdbSearchFirst(t, mediaType)));
 
       res.status(200).json({ results: results.filter(Boolean) });
       return;
