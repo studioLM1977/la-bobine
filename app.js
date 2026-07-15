@@ -959,7 +959,12 @@
     movie.status = mmSelectedStatus;
     movie.notes = document.getElementById('mmNotes').value;
     movie.rating = mmStars.get();
-    saveMovies();
+    // Immédiat comme la suppression : une note ou un statut est une action
+    // volontaire et peu fréquente, on ne veut pas la perdre si le stockage
+    // du téléphone est vidé avant que le débounce de 800ms n'ait eu le temps
+    // d'envoyer la sauvegarde (la restauration cloud écraserait alors avec
+    // une version plus ancienne, sans cette note).
+    saveMovies(true);
     renderAll();
     closeModals();
 
@@ -1451,7 +1456,9 @@
       episodes,
     });
 
-    saveMovies();
+    // Immédiat comme la suppression et l'enregistrement d'une fiche : un ajout
+    // volontaire ne doit pas rester dans la fenêtre de débounce (voir plus haut).
+    saveMovies(true);
     renderAll();
     closeModals();
   });
