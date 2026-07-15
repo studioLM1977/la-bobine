@@ -500,7 +500,7 @@ img { display: block; max-width: 100%; }
 
 /* ---------- Sections ---------- */
 
-.section { margin-top: 44px; }
+.section { margin-top: 40px; }
 
 .section-head {
   display: flex;
@@ -508,11 +508,28 @@ img { display: block; max-width: 100%; }
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 14px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .section-head h2 {
-  font-size: 22px;
+  position: relative;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  padding-left: 14px;
+}
+
+/* Filet doré vertical qui ancre chaque titre de section */
+.section-head h2::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.14em;
+  bottom: 0.14em;
+  width: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
 }
 
 .section-count {
@@ -581,27 +598,35 @@ img { display: block; max-width: 100%; }
   border: 1px solid transparent;
   color: var(--text-secondary);
   font-size: 13.5px;
-  font-weight: 500;
-  padding: 8px 14px;
+  font-weight: 600;
+  padding: 8px 15px;
   border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+  transition: background 0.2s var(--ease), color 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
 
 .tab span {
+  margin-left: 4px;
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }
 
-.tab:hover { background: var(--surface); color: var(--text-primary); }
+.tab:hover { color: var(--text-primary); }
 
 .tab.is-active {
-  background: var(--accent-soft);
+  background: var(--surface);
   color: var(--text-primary);
-  border-color: rgba(201,162,75,0.4);
+  border-color: var(--border);
+  box-shadow: var(--shadow-card);
 }
 
-.tab.is-active span { color: var(--brand-gold); }
+.tab.is-active span {
+  color: var(--accent-text);
+  background: var(--accent);
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  margin-left: 6px;
+}
 
 /* ---------- Top 10 ---------- */
 
@@ -619,7 +644,7 @@ img { display: block; max-width: 100%; }
 .top-card {
   scroll-snap-align: start;
   flex: 0 0 auto;
-  width: 130px;
+  width: 138px;
   cursor: pointer;
   position: relative;
 }
@@ -631,17 +656,19 @@ img { display: block; max-width: 100%; }
      badge quand il débordait du coin de l'affiche. */
   top: 8px;
   left: 8px;
-  z-index: 1;
-  width: 26px;
-  height: 26px;
+  z-index: 2;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
   display: grid;
   place-items: center;
-  font-size: 12px;
-  font-weight: 700;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
   color: var(--accent-text);
   background: var(--accent);
-  border-radius: 50%;
-  box-shadow: 0 3px 8px -2px rgba(24,24,27,0.25);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 10px -3px rgba(201,162,75,0.6);
 }
 
 .top-card-cover {
@@ -722,50 +749,73 @@ img { display: block; max-width: 100%; }
 
 .movie-card-cover img { width: 100%; height: 100%; object-fit: cover; }
 
+/* Dégradé de lisibilité en bas de l'affiche : garantit que la note reste
+   nette quelle que soit l'image. */
+.movie-card-cover::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 42%;
+  background: linear-gradient(to top, rgba(9,9,11,0.72), transparent);
+  pointer-events: none;
+}
+
 .movie-card-status {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  z-index: 1;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 10.5px;
-  font-weight: 600;
-  padding: 4px 9px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 4px 10px 4px 8px;
   border-radius: var(--radius-pill);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  background: rgba(13,14,18,0.6);
-  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(9,9,11,0.55);
+  border: 1px solid rgba(255,255,255,0.14);
   /* Le fond du badge reste toujours sombre (quel que soit le thème du site,
      pour rester lisible sur n'importe quelle affiche) : le texte doit donc
      rester clair par défaut plutôt que de suivre --text-primary. */
   color: #fff;
 }
 
-.movie-card-status[data-s="seen"] { color: #6fd39a; }
-.movie-card-status[data-s="dnf"] { color: var(--danger); }
+/* Pastille de statut colorée devant le libellé */
+.movie-card-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+.movie-card-status[data-s="seen"]::before { background: #4ade80; }
+.movie-card-status[data-s="dnf"]::before { background: #f87171; }
 
 .movie-card-rating {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
+  z-index: 1;
+  bottom: 10px;
+  right: 10px;
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 700;
   color: #fff;
-  background: rgba(13,14,18,0.65);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  padding: 3px 8px;
-  border-radius: var(--radius-pill);
 }
 
-.movie-card-rating svg { width: 11px; height: 11px; color: var(--star); fill: var(--star); }
+.movie-card-rating svg { width: 12px; height: 12px; color: var(--star); fill: var(--star); }
 
 .movie-card-title {
-  margin: 10px 2px 2px;
-  font-size: 13.5px;
-  font-weight: 600;
+  margin: 11px 2px 2px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   line-height: 1.3;
   overflow: hidden;
   display: -webkit-box;
@@ -776,7 +826,7 @@ img { display: block; max-width: 100%; }
 .movie-card-director {
   margin: 0 2px;
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
