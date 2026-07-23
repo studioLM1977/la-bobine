@@ -25,8 +25,8 @@
 
   const PROFILES = [
     { id: 'p1', name: 'Lionel' },
-    { id: 'p2', name: 'Ma femme' },
-    { id: 'p3', name: 'Mon fils' },
+    { id: 'p2', name: 'Sabine' },
+    { id: 'p3', name: 'Léo' },
   ];
   const PROFILE_KEY = 'la-bobine.activeProfile';
   const PROFILE_NAMES_KEY = 'la-bobine.profileNames';
