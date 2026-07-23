@@ -82,13 +82,20 @@
   }
 
   // Applique les libellés film/série dynamiques : tout élément portant
-  // data-movie/data-series (texte) ou data-ph-movie/data-ph-series (placeholder)
-  // ou data-aria-movie/data-aria-series (aria-label) est mis à jour selon activeMediaType.
+  // data-movie/data-series (texte), data-ph-movie/data-ph-series (placeholder),
+  // data-aria-movie/data-aria-series (aria-label) ou data-title-movie/data-title-series
+  // (title) est mis à jour selon activeMediaType. Le jeton {name} dans le
+  // template est en plus remplacé par le nom du profil actif (le clin d'œil
+  // "Lionel" doit devenir "Sabine" ou "Léo" sur leur propre profil).
   function applyMediaTypeLabels() {
     const suffix = activeMediaType === 'series' ? 'series' : 'movie';
-    document.querySelectorAll(`[data-${suffix}]`).forEach(el => { el.textContent = el.dataset[suffix]; });
-    document.querySelectorAll(`[data-ph-${suffix}]`).forEach(el => { el.placeholder = el.dataset[`ph${suffix[0].toUpperCase()}${suffix.slice(1)}`]; });
-    document.querySelectorAll(`[data-aria-${suffix}]`).forEach(el => { el.setAttribute('aria-label', el.dataset[`aria${suffix[0].toUpperCase()}${suffix.slice(1)}`]); });
+    const cap = suffix[0].toUpperCase() + suffix.slice(1);
+    const name = getProfileName(activeProfileId);
+    const withName = (tpl) => tpl.replace(/\{name\}/g, name);
+    document.querySelectorAll(`[data-${suffix}]`).forEach(el => { el.textContent = withName(el.dataset[suffix]); });
+    document.querySelectorAll(`[data-ph-${suffix}]`).forEach(el => { el.placeholder = withName(el.dataset[`ph${cap}`]); });
+    document.querySelectorAll(`[data-aria-${suffix}]`).forEach(el => { el.setAttribute('aria-label', withName(el.dataset[`aria${cap}`])); });
+    document.querySelectorAll(`[data-title-${suffix}]`).forEach(el => { el.title = withName(el.dataset[`title${cap}`]); });
   }
 
   // ---------- Utilitaires premium ----------
@@ -287,7 +294,8 @@
   }
 
   function renderSynopsisEmpty() {
-    const text = activeMediaType === 'series' ? 'Même Lionel n\'a pas de résumé pour cette série.' : 'Même Lionel n\'a pas de résumé pour ce film.';
+    const name = getProfileName(activeProfileId);
+    const text = activeMediaType === 'series' ? `Même ${name} n'a pas de résumé pour cette série.` : `Même ${name} n'a pas de résumé pour ce film.`;
     document.getElementById('mmSynopsisBody').innerHTML = `<p class="synopsis-empty">${text}</p>`;
   }
 
@@ -849,7 +857,7 @@
     const name = getProfileName(activeProfileId);
     document.getElementById('profileBtnAvatar').textContent = name.charAt(0).toUpperCase();
     document.getElementById('profileBtnLabel').textContent = name;
-    profileBtn.title = `Profil : ${name}`;
+    profileBtn.title = `Qui ose défier ${name} ?`;
   }
 
   function renderProfileList() {
@@ -871,7 +879,7 @@
         const newName = input.value.trim() || getProfileName(p.id);
         input.value = newName;
         setProfileName(p.id, newName);
-        if (isActive) updateProfileButton();
+        if (isActive) { updateProfileButton(); applyMediaTypeLabels(); }
       });
       const switchBtn = row.querySelector('.profile-switch-btn');
       if (switchBtn) switchBtn.addEventListener('click', () => {
@@ -906,6 +914,7 @@
     tabsEl.querySelectorAll('.tab').forEach(t => t.classList.toggle('is-active', t.dataset.filter === 'all'));
 
     updateProfileButton();
+    applyMediaTypeLabels();
     renderAll();
     syncFromServer();
   }
@@ -955,13 +964,13 @@
   const mmStars = setupStarWidget(
     document.getElementById('mmStars'),
     document.getElementById('mmStarsFill'),
-    (v) => { document.getElementById('mmStarsValue').textContent = v > 0 ? v + ' / 5' : 'Lionel attend son jugement'; }
+    (v) => { document.getElementById('mmStarsValue').textContent = v > 0 ? v + ' / 5' : `${getProfileName(activeProfileId)} attend son jugement`; }
   );
 
   const afStars = setupStarWidget(
     document.getElementById('afStars'),
     document.getElementById('afStarsFill'),
-    (v) => { document.getElementById('afStarsValue').textContent = v > 0 ? v + ' / 5' : 'Lionel attend son jugement'; }
+    (v) => { document.getElementById('afStarsValue').textContent = v > 0 ? v + ' / 5' : `${getProfileName(activeProfileId)} attend son jugement`; }
   );
 
   // ---------- Modale fiche film ----------
@@ -1015,7 +1024,7 @@
       loadFilmExtras(movie);
 
       mmStars.set(movie.rating || 0);
-      document.getElementById('mmStarsValue').textContent = movie.rating > 0 ? movie.rating + ' / 5' : 'Lionel attend son jugement';
+      document.getElementById('mmStarsValue').textContent = movie.rating > 0 ? movie.rating + ' / 5' : `${getProfileName(activeProfileId)} attend son jugement`;
 
       movieModalOverlay.classList.add('is-open');
     };
@@ -1102,7 +1111,7 @@
       const rect = btn.getBoundingClientRect();
       confettiBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
       haptic([20, 40, 30]);
-      showToast('Encore un. Lionel savait déjà comment ça finissait.', 'celebrate');
+      showToast(`Encore un. ${getProfileName(activeProfileId)} savait déjà comment ça finissait.`, 'celebrate');
     } else if (mmSelectedStatus === 'dnf' && movie.status === 'dnf') {
       haptic(15);
     }
@@ -1237,7 +1246,7 @@
 
   function renderTmdbResults(items) {
     if (items.length === 0) {
-      srResults.innerHTML = '<p class="sr-empty">Même Lionel ne connaît pas celui-là. Change de terme, ou passe en saisie manuelle.</p>';
+      srResults.innerHTML = `<p class="sr-empty">Même ${getProfileName(activeProfileId)} ne connaît pas celui-là. Change de terme, ou passe en saisie manuelle.</p>`;
       return;
     }
 
@@ -1389,7 +1398,7 @@
 
       describeResults.innerHTML = '';
       if (items.length === 0) {
-        describeResults.innerHTML = '<p class="sr-empty">Même Lionel sèche là-dessus. Reformule, ou tente la recherche/saisie manuelle.</p>';
+        describeResults.innerHTML = `<p class="sr-empty">Même ${getProfileName(activeProfileId)} sèche là-dessus. Reformule, ou tente la recherche/saisie manuelle.</p>`;
       } else {
         items.forEach(item => renderCandidateRow(describeResults, item, (picked) => {
           setAddMode('search');
@@ -1397,7 +1406,7 @@
         }, item.year || ''));
       }
     } catch (err) {
-      describeResults.innerHTML = '<p class="sr-error">Lionel fait la sieste (IA indisponible). Tente la recherche classique.</p>';
+      describeResults.innerHTML = `<p class="sr-error">${getProfileName(activeProfileId)} fait la sieste (IA indisponible). Tente la recherche classique.</p>`;
     } finally {
       describeSubmitBtn.disabled = false;
       describeSubmitBtn.classList.remove('is-busy');
@@ -1442,9 +1451,10 @@
     renderRecommendGenres();
 
     const rated = currentLibrary().filter(m => m.rating > 0);
+    const recommendName = getProfileName(activeProfileId);
     const emptyMsg = activeMediaType === 'series'
-      ? 'Note au moins une série pour donner un point de départ à Lionel.'
-      : 'Note au moins un film pour donner un point de départ à Lionel.';
+      ? `Note au moins une série pour donner un point de départ à ${recommendName}.`
+      : `Note au moins un film pour donner un point de départ à ${recommendName}.`;
     recommendResults.innerHTML = rated.length === 0 ? `<p class="sr-empty">${emptyMsg}</p>` : '';
 
     recommendModalOverlay.classList.add('is-open');
@@ -1476,7 +1486,7 @@
 
       recommendResults.innerHTML = '';
       if (items.length === 0) {
-        recommendResults.innerHTML = '<p class="sr-empty">Lionel sèche, pour une fois. Réessaie plus tard.</p>';
+        recommendResults.innerHTML = `<p class="sr-empty">${getProfileName(activeProfileId)} sèche, pour une fois. Réessaie plus tard.</p>`;
       } else {
         items.forEach(item => renderCandidateRow(recommendResults, item, (picked) => {
           recommendModalOverlay.classList.remove('is-open');
@@ -1486,7 +1496,7 @@
         }, item.reason || ''));
       }
     } catch (err) {
-      recommendResults.innerHTML = '<p class="sr-error">Lionel n\'a pas d\'inspiration là, tout de suite.</p>';
+      recommendResults.innerHTML = `<p class="sr-error">${getProfileName(activeProfileId)} n'a pas d'inspiration là, tout de suite.</p>`;
     } finally {
       recommendSubmitBtn.disabled = false;
       recommendSubmitBtn.classList.remove('is-busy');
@@ -1500,6 +1510,7 @@
     updateStatusChips(afStatusChips, afSelectedStatus);
     afRatingBlock.hidden = true;
     afStars.set(0);
+    document.getElementById('afStarsValue').textContent = `${getProfileName(activeProfileId)} attend son jugement`;
     selectedMovie = null;
     srSelected.hidden = true;
     srResults.innerHTML = '';
@@ -1724,9 +1735,9 @@
       const parts = [];
       if (added > 0) parts.push(`${added} ajouté${added > 1 ? 's' : ''}`);
       if (updated > 0) parts.push(`${updated} mis à jour`);
-      showToast(parts.length ? parts.join(' · ') : 'Rien de neuf. Lionel avait déjà tout vu, de toute façon.');
+      showToast(parts.length ? parts.join(' · ') : `Rien de neuf. ${getProfileName(activeProfileId)} avait déjà tout vu, de toute façon.`);
     } catch (err) {
-      if (!opts.silent) showToast('Import impossible : lien invalide. Même Lionel n\'y comprend rien.');
+      if (!opts.silent) showToast(`Import impossible : lien invalide. Même ${getProfileName(activeProfileId)} n'y comprend rien.`);
     }
   }
 
@@ -1750,7 +1761,8 @@
     clearTimeout(syncStatusHideTimer);
     el.classList.remove('is-hidden');
     el.dataset.state = state;
-    const labels = { synced: 'Lionel est à jour', pending: 'Lionel prend des notes…', offline: 'Lionel est hors-ligne (patience)' };
+    const syncName = getProfileName(activeProfileId);
+    const labels = { synced: `${syncName} est à jour`, pending: `${syncName} prend des notes…`, offline: `${syncName} est hors-ligne (patience)` };
     document.getElementById('syncStatusText').textContent = labels[state] || '';
     // "Synchronisé" s'efface après coup : sinon la pastille fixe reste
     // visible en permanence par-dessus le contenu pendant le défilement
@@ -1811,7 +1823,7 @@
         movies = data.books;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
         renderAll();
-        showToast('Ouf, la mémoire de Lionel est de retour.');
+        showToast(`Ouf, la mémoire de ${getProfileName(activeProfileId)} est de retour.`);
         return;
       }
       applyImport(data.books, { silent: true });
@@ -1834,7 +1846,7 @@
         const decoded = decodeURIComponent(escape(atob(raw)));
         applyImport(JSON.parse(decoded));
       } catch (err) {
-        showToast('Import impossible : lien invalide. Même Lionel n\'y comprend rien.');
+        showToast(`Import impossible : lien invalide. Même ${getProfileName(activeProfileId)} n'y comprend rien.`);
       }
     }
 
@@ -1842,7 +1854,7 @@
       fetch(fromFile)
         .then(res => res.json())
         .then(applyImport)
-        .catch(() => showToast('Import impossible : fichier introuvable. Lionel a cherché partout.'));
+        .catch(() => showToast(`Import impossible : fichier introuvable. ${getProfileName(activeProfileId)} a cherché partout.`));
     }
   }
 
@@ -1859,7 +1871,7 @@
 
     const targets = movies.filter(m => !looksLikeTmdbPoster(m.poster));
     if (targets.length === 0) {
-      showToast('Lionel a déjà tout optimisé. Rien à faire ici.');
+      showToast(`${getProfileName(activeProfileId)} a déjà tout optimisé. Rien à faire ici.`);
       return;
     }
 
@@ -1900,7 +1912,8 @@
       saveMovies();
       renderAll();
     }
-    showToast(improved > 0 ? `${improved} affiche${improved > 1 ? 's' : ''} validée${improved > 1 ? 's' : ''} par Lionel` : 'Lionel a cherché. Rien de mieux à trouver.');
+    const posterName = getProfileName(activeProfileId);
+    showToast(improved > 0 ? `${improved} affiche${improved > 1 ? 's' : ''} validée${improved > 1 ? 's' : ''} par ${posterName}` : `${posterName} a cherché. Rien de mieux à trouver.`);
   });
 
   // ---------- Réglages : thème clair/sombre ----------

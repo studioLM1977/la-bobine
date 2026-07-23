@@ -45,23 +45,23 @@
         <circle cx="11" cy="11" r="7"/>
         <path d="m20 20-3.5-3.5"/>
       </svg>
-      <input type="text" id="searchInput" placeholder="Un film que Lionel a sûrement déjà vu…" autocomplete="off" data-ph-movie="Un film que Lionel a sûrement déjà vu…" data-ph-series="Une série que Lionel a sûrement déjà vue…">
+      <input type="text" id="searchInput" placeholder="Un film que {name} a sûrement déjà vu…" autocomplete="off" data-ph-movie="Un film que {name} a sûrement déjà vu…" data-ph-series="Une série que {name} a sûrement déjà vue…">
     </div>
 
     <div class="topbar-actions">
-      <button class="btn btn-ghost" id="improvePostersBtn" title="Aller chercher les vraies affiches (Lionel juge aussi les visuels)">
+      <button class="btn btn-ghost" id="improvePostersBtn" title="Aller chercher les vraies affiches ({name} juge aussi les visuels)" data-title-movie="Aller chercher les vraies affiches ({name} juge aussi les visuels)" data-title-series="Aller chercher les vraies affiches ({name} juge aussi les visuels)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.2"/><circle cx="8.6" cy="9.6" r="1.6"/><path d="m21 15.5-5.1-5.1a1.5 1.5 0 0 0-2.12 0L5 19"/></svg>
         <span>Affiches</span>
       </button>
       <button class="btn btn-ghost" id="recommendBtn" title="Des idées, à condition d'avoir noté des films">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>
-        <span>Idées de Lionel</span>
+        <span data-movie="Idées de {name}" data-series="Idées de {name}">Idées de Lionel</span>
       </button>
       <button class="btn btn-primary" id="openAddBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         <span data-movie="Soumettre une victime" data-series="Soumettre une victime">Soumettre une victime</span>
       </button>
-      <button class="btn btn-ghost" id="profileBtn" title="Qui ose défier Lionel ?">
+      <button class="btn btn-ghost" id="profileBtn">
         <span class="profile-avatar-badge" id="profileBtnAvatar"></span>
         <span id="profileBtnLabel"></span>
       </button>
@@ -88,7 +88,7 @@
 
     <section class="section">
       <div class="section-head">
-        <h2 data-movie="Sous la surveillance de Lionel" data-series="Sous la surveillance de Lionel">Sous la surveillance de Lionel</h2>
+        <h2 data-movie="Sous la surveillance de {name}" data-series="Sous la surveillance de {name}">Sous la surveillance de Lionel</h2>
         <div class="library-controls">
           <div class="tabs" id="tabs">
             <button class="tab is-active" data-filter="all">Tous <span>0</span></button>
@@ -175,7 +175,7 @@
         </a>
 
         <div class="field-block watch-block" id="mmWatchBlock" hidden>
-          <label>Où Lionel regarderait ça</label>
+          <label data-movie="Où {name} regarderait ça" data-series="Où {name} regarderait ça">Où Lionel regarderait ça</label>
           <div class="watch-providers" id="mmWatchProviders"></div>
           <a href="#" target="_blank" rel="noopener" class="watch-attribution" id="mmWatchAttribution" hidden>Données via JustWatch</a>
         </div>
@@ -186,7 +186,7 @@
         </div>
 
         <div class="field-block cast-block" id="mmCastBlock" hidden>
-          <label>Le casting que Lionel connaît par cœur</label>
+          <label data-movie="Le casting que {name} connaît par cœur" data-series="Le casting que {name} connaît par cœur">Le casting que Lionel connaît par cœur</label>
           <p class="cast-body" id="mmCastBody"></p>
         </div>
 
@@ -222,11 +222,11 @@
 
         <div class="field-block">
           <label for="mmNotes">Notes personnelles</label>
-          <textarea id="mmNotes" rows="4" placeholder="Ton avis, même si Lionel a déjà le sien…" data-ph-movie="Ton avis, même si Lionel a déjà le sien…" data-ph-series="Ton avis, même si Lionel a déjà le sien…"></textarea>
+          <textarea id="mmNotes" rows="4" placeholder="Ton avis, même si {name} a déjà le sien…" data-ph-movie="Ton avis, même si {name} a déjà le sien…" data-ph-series="Ton avis, même si {name} a déjà le sien…"></textarea>
         </div>
 
         <div class="field-block similar-block" id="mmSimilarBlock" hidden>
-          <label data-movie="Lionel recommande aussi" data-series="Lionel recommande aussi">Lionel recommande aussi</label>
+          <label data-movie="{name} recommande aussi" data-series="{name} recommande aussi">Lionel recommande aussi</label>
           <div class="similar-strip" id="mmSimilarStrip"></div>
         </div>
 
@@ -245,7 +245,7 @@
     <button class="modal-close" data-close>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
-    <h3 id="addModalTitle" data-movie="Nouvelle victime pour Lionel" data-series="Nouvelle victime pour Lionel">Nouvelle victime pour Lionel</h3>
+    <h3 id="addModalTitle" data-movie="Nouvelle victime pour {name}" data-series="Nouvelle victime pour {name}">Nouvelle victime pour Lionel</h3>
 
     <div class="mode-tabs" id="modeTabs">
       <button type="button" class="mode-tab is-active" data-mode="search">Rechercher</button>
@@ -274,7 +274,7 @@
 
       <div id="describeModeBlock" hidden>
         <div class="field-block">
-          <label for="describeInput" id="describeInputLabel" data-movie="Décris-le, même si Lionel a sûrement déjà la réponse (intrigue, acteur, scène culte…)" data-series="Décris-la, même si Lionel a sûrement déjà la réponse (intrigue, acteur, scène culte…)">Décris-le, même si Lionel a sûrement déjà la réponse (intrigue, acteur, scène culte…)</label>
+          <label for="describeInput" id="describeInputLabel" data-movie="Décris-le, même si {name} a sûrement déjà la réponse (intrigue, acteur, scène culte…)" data-series="Décris-la, même si {name} a sûrement déjà la réponse (intrigue, acteur, scène culte…)">Décris-le, même si Lionel a sûrement déjà la réponse (intrigue, acteur, scène culte…)</label>
           <div class="textarea-with-mic">
             <textarea id="describeInput" rows="3" placeholder="Ex. le film où un type revit la même journée en boucle, avec Bill Murray" data-ph-movie="Ex. le film où un type revit la même journée en boucle, avec Bill Murray" data-ph-series="Ex. la série où des types fabriquent de la drogue dans un camping-car, avec Bryan Cranston"></textarea>
             <button type="button" class="mic-btn" id="describeMicBtn" aria-label="Dicter" hidden>
@@ -284,7 +284,7 @@
         </div>
         <button type="button" class="btn btn-ghost" id="describeSubmitBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>
-          <span data-movie="Demander à l'IA (Lionel botte en touche)" data-series="Demander à l'IA (Lionel botte en touche)">Demander à l'IA (Lionel botte en touche)</span>
+          <span data-movie="Demander à l'IA ({name} botte en touche)" data-series="Demander à l'IA ({name} botte en touche)">Demander à l'IA (Lionel botte en touche)</span>
         </button>
         <div class="sr-results" id="describeResults"></div>
       </div>
@@ -354,7 +354,7 @@
       </div>
 
       <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" id="addSubmitBtn" disabled data-movie="Soumettre au jugement de Lionel" data-series="Soumettre au jugement de Lionel">Soumettre au jugement de Lionel</button>
+        <button type="submit" class="btn btn-primary" id="addSubmitBtn" disabled data-movie="Soumettre au jugement de {name}" data-series="Soumettre au jugement de {name}">Soumettre au jugement de Lionel</button>
       </div>
     </form>
   </div>
@@ -366,14 +366,14 @@
     <button class="modal-close" data-close>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
-    <h3>Idées de Lionel</h3>
-    <p class="recommend-intro" id="recommendIntro" data-movie="Quel style pourrait avoir échappé à Lionel aujourd'hui ?" data-series="Quel style pourrait avoir échappé à Lionel aujourd'hui ?">Quel style pourrait avoir échappé à Lionel aujourd'hui ?</p>
+    <h3 id="recommendTitle" data-movie="Idées de {name}" data-series="Idées de {name}">Idées de Lionel</h3>
+    <p class="recommend-intro" id="recommendIntro" data-movie="Quel style pourrait avoir échappé à {name} aujourd'hui ?" data-series="Quel style pourrait avoir échappé à {name} aujourd'hui ?">Quel style pourrait avoir échappé à Lionel aujourd'hui ?</p>
     <div class="filter-row" id="recommendGenreRow"></div>
     <div class="field-block">
       <label for="recommendStyleInput">Précise l'ambiance (optionnel)</label>
       <input type="text" id="recommendStyleInput" placeholder="Ex. léger, haletant, qui fait peur, feel-good…">
     </div>
-    <button type="button" class="btn btn-primary" id="recommendSubmitBtn" data-movie="Trouver ce que Lionel n'a pas vu" data-series="Trouver ce que Lionel n'a pas vu">Trouver ce que Lionel n'a pas vu</button>
+    <button type="button" class="btn btn-primary" id="recommendSubmitBtn" data-movie="Trouver ce que {name} n'a pas vu" data-series="Trouver ce que {name} n'a pas vu">Trouver ce que Lionel n'a pas vu</button>
     <div class="sr-results" id="recommendResults"></div>
   </div>
 </div>
@@ -384,7 +384,7 @@
     <button class="modal-close" data-close>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
-    <h3>Qui ose défier Lionel ?</h3>
+    <h3 data-movie="Qui ose défier {name} ?" data-series="Qui ose défier {name} ?">Qui ose défier Lionel ?</h3>
     <p class="recommend-intro">Chacun son classement, chacun son jugement.</p>
     <div class="profile-list" id="profileList"></div>
   </div>
