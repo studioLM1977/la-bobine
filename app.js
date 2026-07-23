@@ -1102,7 +1102,7 @@
       const rect = btn.getBoundingClientRect();
       confettiBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
       haptic([20, 40, 30]);
-      showToast(isSeries(movie) ? 'Série terminée — bravo !' : 'Film terminé — bravo !', 'celebrate');
+      showToast('Encore un. Lionel savait déjà comment ça finissait.', 'celebrate');
     } else if (mmSelectedStatus === 'dnf' && movie.status === 'dnf') {
       haptic(15);
     }
@@ -1724,7 +1724,7 @@
       const parts = [];
       if (added > 0) parts.push(`${added} ajouté${added > 1 ? 's' : ''}`);
       if (updated > 0) parts.push(`${updated} mis à jour`);
-      showToast(parts.length ? parts.join(' · ') : 'Rien à changer (déjà à jour)');
+      showToast(parts.length ? parts.join(' · ') : 'Rien de neuf. Lionel avait déjà tout vu, de toute façon.');
     } catch (err) {
       if (!opts.silent) showToast('Import impossible : lien invalide');
     }
@@ -1811,7 +1811,7 @@
         movies = data.books;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
         renderAll();
-        showToast('Bibliothèque restaurée depuis la sauvegarde en ligne');
+        showToast('Ouf, la mémoire de Lionel est de retour.');
         return;
       }
       applyImport(data.books, { silent: true });

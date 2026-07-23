@@ -1,6 +1,6 @@
 {
-  "name": "FILMLIOGRAPHIE — Suivi de films",
-  "short_name": "FILMLIOGRAPHIE",
+  "name": "LIONEL VOIT TOUT — Suivi de films",
+  "short_name": "LIONEL VOIT TOUT",
   "description": "Suivez vos films : progression, notes, listes et statistiques.",
   "start_url": "./index.html",
   "scope": "./",
