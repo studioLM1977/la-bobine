@@ -287,7 +287,7 @@
   }
 
   function renderSynopsisEmpty() {
-    const text = activeMediaType === 'series' ? 'Synopsis indisponible pour cette série.' : 'Synopsis indisponible pour ce film.';
+    const text = activeMediaType === 'series' ? 'Même Lionel n\'a pas de résumé pour cette série.' : 'Même Lionel n\'a pas de résumé pour ce film.';
     document.getElementById('mmSynopsisBody').innerHTML = `<p class="synopsis-empty">${text}</p>`;
   }
 
@@ -955,13 +955,13 @@
   const mmStars = setupStarWidget(
     document.getElementById('mmStars'),
     document.getElementById('mmStarsFill'),
-    (v) => { document.getElementById('mmStarsValue').textContent = v > 0 ? v + ' / 5' : 'Pas encore noté'; }
+    (v) => { document.getElementById('mmStarsValue').textContent = v > 0 ? v + ' / 5' : 'Lionel attend son jugement'; }
   );
 
   const afStars = setupStarWidget(
     document.getElementById('afStars'),
     document.getElementById('afStarsFill'),
-    (v) => { document.getElementById('afStarsValue').textContent = v > 0 ? v + ' / 5' : 'Pas encore noté'; }
+    (v) => { document.getElementById('afStarsValue').textContent = v > 0 ? v + ' / 5' : 'Lionel attend son jugement'; }
   );
 
   // ---------- Modale fiche film ----------
@@ -1015,7 +1015,7 @@
       loadFilmExtras(movie);
 
       mmStars.set(movie.rating || 0);
-      document.getElementById('mmStarsValue').textContent = movie.rating > 0 ? movie.rating + ' / 5' : 'Pas encore noté';
+      document.getElementById('mmStarsValue').textContent = movie.rating > 0 ? movie.rating + ' / 5' : 'Lionel attend son jugement';
 
       movieModalOverlay.classList.add('is-open');
     };
@@ -1219,7 +1219,7 @@
       const results = await searchTmdb(query, 8, addMediaType);
       renderTmdbResults(results);
     } catch (err) {
-      srResults.innerHTML = '<p class="sr-error">Recherche indisponible pour le moment. Essayez la saisie manuelle.</p>';
+      srResults.innerHTML = '<p class="sr-error">Recherche en grève. Tente la saisie manuelle.</p>';
     }
   }
 
@@ -1237,7 +1237,7 @@
 
   function renderTmdbResults(items) {
     if (items.length === 0) {
-      srResults.innerHTML = '<p class="sr-empty">Aucun résultat. Essayez un autre terme ou passez en saisie manuelle.</p>';
+      srResults.innerHTML = '<p class="sr-empty">Même Lionel ne connaît pas celui-là. Change de terme, ou passe en saisie manuelle.</p>';
       return;
     }
 
@@ -1389,7 +1389,7 @@
 
       describeResults.innerHTML = '';
       if (items.length === 0) {
-        describeResults.innerHTML = '<p class="sr-empty">Aucune piste trouvée. Essayez de reformuler, ou passez en recherche/saisie manuelle.</p>';
+        describeResults.innerHTML = '<p class="sr-empty">Même Lionel sèche là-dessus. Reformule, ou tente la recherche/saisie manuelle.</p>';
       } else {
         items.forEach(item => renderCandidateRow(describeResults, item, (picked) => {
           setAddMode('search');
@@ -1397,7 +1397,7 @@
         }, item.year || ''));
       }
     } catch (err) {
-      describeResults.innerHTML = '<p class="sr-error">IA indisponible pour le moment. Essayez la recherche classique.</p>';
+      describeResults.innerHTML = '<p class="sr-error">Lionel fait la sieste (IA indisponible). Tente la recherche classique.</p>';
     } finally {
       describeSubmitBtn.disabled = false;
       describeSubmitBtn.classList.remove('is-busy');
@@ -1443,8 +1443,8 @@
 
     const rated = currentLibrary().filter(m => m.rating > 0);
     const emptyMsg = activeMediaType === 'series'
-      ? 'Notez au moins une série pour obtenir des suggestions.'
-      : 'Notez au moins un film pour obtenir des suggestions.';
+      ? 'Note au moins une série pour donner un point de départ à Lionel.'
+      : 'Note au moins un film pour donner un point de départ à Lionel.';
     recommendResults.innerHTML = rated.length === 0 ? `<p class="sr-empty">${emptyMsg}</p>` : '';
 
     recommendModalOverlay.classList.add('is-open');
@@ -1476,7 +1476,7 @@
 
       recommendResults.innerHTML = '';
       if (items.length === 0) {
-        recommendResults.innerHTML = '<p class="sr-empty">Aucune suggestion pour le moment.</p>';
+        recommendResults.innerHTML = '<p class="sr-empty">Lionel sèche, pour une fois. Réessaie plus tard.</p>';
       } else {
         items.forEach(item => renderCandidateRow(recommendResults, item, (picked) => {
           recommendModalOverlay.classList.remove('is-open');
@@ -1486,7 +1486,7 @@
         }, item.reason || ''));
       }
     } catch (err) {
-      recommendResults.innerHTML = '<p class="sr-error">Suggestions indisponibles pour le moment.</p>';
+      recommendResults.innerHTML = '<p class="sr-error">Lionel n\'a pas d\'inspiration là, tout de suite.</p>';
     } finally {
       recommendSubmitBtn.disabled = false;
       recommendSubmitBtn.classList.remove('is-busy');
@@ -1726,7 +1726,7 @@
       if (updated > 0) parts.push(`${updated} mis à jour`);
       showToast(parts.length ? parts.join(' · ') : 'Rien de neuf. Lionel avait déjà tout vu, de toute façon.');
     } catch (err) {
-      if (!opts.silent) showToast('Import impossible : lien invalide');
+      if (!opts.silent) showToast('Import impossible : lien invalide. Même Lionel n\'y comprend rien.');
     }
   }
 
@@ -1750,7 +1750,7 @@
     clearTimeout(syncStatusHideTimer);
     el.classList.remove('is-hidden');
     el.dataset.state = state;
-    const labels = { synced: 'Synchronisé', pending: 'Synchronisation…', offline: 'Hors ligne — en attente' };
+    const labels = { synced: 'Lionel est à jour', pending: 'Lionel prend des notes…', offline: 'Lionel est hors-ligne (patience)' };
     document.getElementById('syncStatusText').textContent = labels[state] || '';
     // "Synchronisé" s'efface après coup : sinon la pastille fixe reste
     // visible en permanence par-dessus le contenu pendant le défilement
@@ -1834,7 +1834,7 @@
         const decoded = decodeURIComponent(escape(atob(raw)));
         applyImport(JSON.parse(decoded));
       } catch (err) {
-        showToast('Import impossible : lien invalide');
+        showToast('Import impossible : lien invalide. Même Lionel n\'y comprend rien.');
       }
     }
 
@@ -1842,7 +1842,7 @@
       fetch(fromFile)
         .then(res => res.json())
         .then(applyImport)
-        .catch(() => showToast('Import impossible : fichier introuvable'));
+        .catch(() => showToast('Import impossible : fichier introuvable. Lionel a cherché partout.'));
     }
   }
 
@@ -1859,7 +1859,7 @@
 
     const targets = movies.filter(m => !looksLikeTmdbPoster(m.poster));
     if (targets.length === 0) {
-      showToast('Toutes les affiches viennent déjà de TMDB');
+      showToast('Lionel a déjà tout optimisé. Rien à faire ici.');
       return;
     }
 
@@ -1900,7 +1900,7 @@
       saveMovies();
       renderAll();
     }
-    showToast(improved > 0 ? `${improved} affiche${improved > 1 ? 's' : ''} améliorée${improved > 1 ? 's' : ''}` : 'Aucune amélioration trouvée sur TMDB');
+    showToast(improved > 0 ? `${improved} affiche${improved > 1 ? 's' : ''} validée${improved > 1 ? 's' : ''} par Lionel` : 'Lionel a cherché. Rien de mieux à trouver.');
   });
 
   // ---------- Réglages : thème clair/sombre ----------

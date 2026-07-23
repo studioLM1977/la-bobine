@@ -1,7 +1,7 @@
 {
   "name": "LIONEL VOIT TOUT — Suivi de films",
   "short_name": "LIONEL VOIT TOUT",
-  "description": "Suivez vos films : progression, notes, listes et statistiques.",
+  "description": "Suivez vos films et séries, sous l'œil qui voit tout.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
