@@ -96,6 +96,13 @@
     document.querySelectorAll(`[data-ph-${suffix}]`).forEach(el => { el.placeholder = withName(el.dataset[`ph${cap}`]); });
     document.querySelectorAll(`[data-aria-${suffix}]`).forEach(el => { el.setAttribute('aria-label', withName(el.dataset[`aria${cap}`])); });
     document.querySelectorAll(`[data-title-${suffix}]`).forEach(el => { el.title = withName(el.dataset[`title${cap}`]); });
+
+    // Le nom de l'app elle-même (logo topbar + onglet du navigateur) suit
+    // aussi le profil actif, en majuscules pour matcher le style du logo.
+    const upperName = name.toUpperCase();
+    const brandName = document.getElementById('brandName');
+    if (brandName) brandName.textContent = upperName;
+    document.title = `${upperName} VOIT TOUT — Suivi de films`;
   }
 
   // ---------- Utilitaires premium ----------
