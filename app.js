@@ -553,9 +553,42 @@
     return { movies: structuredClone(MOCK_MOVIES), wasEmpty: true };
   }
 
+  // ---------- Purge des films "fantômes" (données de démo d'origine) ----------
+  // Ces 5 titres traînent quelque part dans une ancienne sauvegarde cloud
+  // (ou un cache de service worker déjà corrigé) et reviennent régulièrement
+  // via la fusion/restauration cloud. Plutôt que de continuer à traquer la
+  // source exacte, on les détecte et on les élimine systématiquement, à
+  // chaque chargement et à chaque fusion, où qu'ils réapparaissent.
+  // Signature sûre pour ne jamais toucher un vrai ajout volontaire du même
+  // titre : affiche de secours (SVG générée) ET aucune note.
+  const GHOST_DEMO_KEYS = new Set([
+    'blade runner 2049|denis villeneuve',
+    'inception|christopher nolan',
+    'interstellar|christopher nolan',
+    "le fabuleux destin d'amelie poulain|jean-pierre jeunet",
+    'pulp fiction|quentin tarantino',
+  ]);
+
+  function isGhostDemoMovie(m) {
+    if (!m) return false;
+    const key = normKey(m.title) + '|' + normKey(m.director);
+    if (!GHOST_DEMO_KEYS.has(key)) return false;
+    const hasFallbackPoster = !m.poster || m.poster.startsWith('data:image/svg');
+    const hasNoRating = !(m.rating > 0);
+    return hasFallbackPoster && hasNoRating;
+  }
+
+  function stripGhostDemoMovies(list) {
+    return (list || []).filter(m => !isGhostDemoMovie(m));
+  }
+
   let STORAGE_KEY = profileStorageKey(activeProfileId);
   const initialLoad = loadMovies(activeProfileId);
-  let movies = initialLoad.movies;
+  let movies = stripGhostDemoMovies(initialLoad.movies);
+  // Si la purge a retiré quelque chose au chargement, on renvoie la version
+  // nettoyée au cloud dès que possible (voir tout en bas du fichier) : sinon
+  // le prochain chargement retomberait sur la même sauvegarde cloud polluée.
+  const ghostsPurgedAtLoad = movies.length !== initialLoad.movies.length;
   // true si le stockage du téléphone était vide au démarrage (donc rempli avec les
   // films de démo) : sert à savoir si on peut écraser sans risque avec la sauvegarde cloud.
   let libraryWasEmpty = initialLoad.wasEmpty;
@@ -1664,6 +1697,7 @@
       .trim();
   }
 
+
   function showToast(message, variant = 'info') {
     const toast = document.createElement('div');
     toast.className = 'toast is-' + variant;
@@ -1682,6 +1716,7 @@
   function applyImport(incoming, opts = {}) {
     try {
       if (!Array.isArray(incoming)) return;
+      incoming = stripGhostDemoMovies(incoming);
 
       const dedupKey = (title, director, mediaType) => normKey(title) + '|' + normKey(director) + '|' + (mediaType === 'series' ? 'series' : 'movie');
       const existingKeys = new Set(movies.map(m => dedupKey(m.title, m.director, m.mediaType)));
@@ -1826,10 +1861,13 @@
       }
       if (libraryWasEmpty && data.books.length > 0) {
         // Stockage du téléphone vide au démarrage → la sauvegarde cloud est la seule
-        // source fiable, on remplace les films de démo sans les fusionner.
-        movies = data.books;
+        // source fiable, on remplace les films de démo sans les fusionner (en
+        // filtrant les fantômes au passage, au cas où ils traînent encore là).
+        const cleaned = stripGhostDemoMovies(data.books);
+        movies = cleaned;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
         renderAll();
+        if (cleaned.length !== data.books.length) saveMovies(true);
         showToast(`Ouf, la mémoire de ${getProfileName(activeProfileId)} est de retour.`);
         return;
       }
@@ -1955,6 +1993,9 @@
   mediaToggle.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('is-active', b.dataset.media === activeMediaType));
   applyMediaTypeLabels();
   renderAll();
+  // La purge des films fantômes (voir plus haut) a eu lieu avant que saveMovies
+  // soit utilisable ; on renvoie la version nettoyée au cloud maintenant.
+  if (ghostsPurgedAtLoad) saveMovies(true);
   importFromUrl();
   syncFromServer();
 
