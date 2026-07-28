@@ -48,6 +48,14 @@
     localStorage.setItem(PROFILE_NAMES_KEY, JSON.stringify(profileNames));
   }
 
+  // Élision devant un prénom qui commence par une voyelle (Océanne → d'Océanne,
+  // qu'Océanne), pour rester correct quel que soit le prénom du profil.
+  function startsWithVowelSound(str) {
+    return /^[aeiouyàâäéèêëîïôöùûüh]/i.test(str || '');
+  }
+  function withDe(name) { return (startsWithVowelSound(name) ? 'd\'' : 'de ') + name; }
+  function withQue(name) { return (startsWithVowelSound(name) ? 'qu\'' : 'que ') + name; }
+
   let activeProfileId = localStorage.getItem(PROFILE_KEY) || PROFILES[0].id;
   if (!PROFILES.some(p => p.id === activeProfileId)) activeProfileId = PROFILES[0].id;
 
@@ -92,7 +100,10 @@
     const suffix = activeMediaType === 'series' ? 'series' : 'movie';
     const cap = suffix[0].toUpperCase() + suffix.slice(1);
     const name = getProfileName(activeProfileId);
-    const withName = (tpl) => tpl.replace(/\{name\}/g, name);
+    const withName = (tpl) => tpl
+      .replace(/de \{name\}/g, withDe(name))
+      .replace(/que \{name\}/g, withQue(name))
+      .replace(/\{name\}/g, name);
     document.querySelectorAll(`[data-${suffix}]`).forEach(el => { el.textContent = withName(el.dataset[suffix]); });
     document.querySelectorAll(`[data-ph-${suffix}]`).forEach(el => { el.placeholder = withName(el.dataset[`ph${cap}`]); });
     document.querySelectorAll(`[data-aria-${suffix}]`).forEach(el => { el.setAttribute('aria-label', withName(el.dataset[`aria${cap}`])); });
@@ -1869,7 +1880,7 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
         renderAll();
         if (cleaned.length !== data.books.length) saveMovies(true);
-        showToast(`Ouf, la mémoire de ${getProfileName(activeProfileId)} est de retour.`);
+        showToast(`Ouf, la mémoire ${withDe(getProfileName(activeProfileId))} est de retour.`);
         return;
       }
       applyImport(data.books, { silent: true });
