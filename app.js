@@ -27,6 +27,7 @@
     { id: 'p1', name: 'Lionel' },
     { id: 'p2', name: 'Sabine' },
     { id: 'p3', name: 'Léo' },
+    { id: 'p4', name: 'Océanne' },
   ];
   const PROFILE_KEY = 'la-bobine.activeProfile';
   const PROFILE_NAMES_KEY = 'la-bobine.profileNames';
